@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service.MangaOnline", "Service.MangaOnline\Service.MangaOnline.csproj", "{88D1A121-DBED-4304-99FE-D8E45F451C3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client.Manager", "Client.Manager\Client.Manager.csproj", "{7B0F9519-4D21-4C8A-B242-2A83BACC33F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service.Schedule", "Service.Schedule\Service.Schedule.csproj", "{67B9C76F-FAF8-41CA-937B-207B62A44D3A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{88D1A121-DBED-4304-99FE-D8E45F451C3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88D1A121-DBED-4304-99FE-D8E45F451C3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88D1A121-DBED-4304-99FE-D8E45F451C3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88D1A121-DBED-4304-99FE-D8E45F451C3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B0F9519-4D21-4C8A-B242-2A83BACC33F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B0F9519-4D21-4C8A-B242-2A83BACC33F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B0F9519-4D21-4C8A-B242-2A83BACC33F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B0F9519-4D21-4C8A-B242-2A83BACC33F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67B9C76F-FAF8-41CA-937B-207B62A44D3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67B9C76F-FAF8-41CA-937B-207B62A44D3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67B9C76F-FAF8-41CA-937B-207B62A44D3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67B9C76F-FAF8-41CA-937B-207B62A44D3A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

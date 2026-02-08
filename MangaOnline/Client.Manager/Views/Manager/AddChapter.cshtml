@@ -1,0 +1,105 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Service.MangaOnline.Commons
+@using Service.MangaOnline.ResponseModels
+
+@{
+    Layout = "_Layout";
+    var manga = (MangaResponse)ViewData["manga"]!;
+    ViewData["title"] = "Add Chapter";
+}
+
+<link rel="stylesheet" href="~/css/AddManga.css">
+<div class="sign section--bg">
+    <div class="container-add">
+            
+        <div class="row">
+            <div class="col-12">
+         
+                <div class="sign__content" style="padding-top: 100px;">
+                    <!-- add form -->
+                    <form method="post" action="AddChapter" class="sign__form form-addManga"  enctype="multipart/form-data">
+                        <div class="title-addManga">
+                            <h1>Thêm Chapter</h1>
+                        </div>
+                        <div class="col-12" style="display: flex;">
+                            <div class="col-sm-4">
+                                <div class="input-group-add">
+                                    <p class="input-title">Tên Manga</p>
+                                    <input type="text" readonly value="@manga.Name" class="sign__input">
+                                    <input type="text" name="mangaId" hidden value="@manga.Id" >
+                                </div>
+                                <div class="input-group-add">
+                                    <p class="input-title">Chapter Number</p>
+                                    <input type="number" name="ChapNumber" class="sign__input">
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="input-group-add">
+                                    <p class="input-title" required
+                                    >UpLoad</p>
+                                    <input type="file"  id="fileInput"
+                                           class="input-file-image"
+                                           accept=".pdf"  name="fileUp" onchange="setfilename(this.value)"/>
+                                    <input type="text" name="wpName" id="wpName" class="sign__input">
+                                </div>
+                                
+                                <div class="input-group-add">
+                                    <p class="input-title">Trạng thái</p>
+                                    <div class="radio-group ">
+                                        <label class="container active-input" >
+                                            Miễn phí <input name="Status" value="@((int)ChapterEnum.Normal)" type="radio" checked>
+                                            <span class="checkmark"></span>
+                                        </label>
+                                        <label class="container active-input">
+                                            Trả phí <input name="Status" value="@((int)ChapterEnum.Vip)" type="radio">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                           
+                            
+                            <div class="col-sm-4">
+                                <div>
+                                    <div style="max-height: 120px;margin-bottom:10px">
+                                        <button class="sign__btn" id="submitBtn" type="submit">Thêm chapter</button>
+                                    </div>
+                                         @*  <div style="display:none;color: green;font-size:12px;" id="done_success">Add thành công chapter mới</div> *@
+                                         @* <div style="display:none" id="take_notice">@ViewData["done"]</div> *@
+                                </div>
+                            </div>
+                             
+                            </div>
+</form>
+                    <!-- add form -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+   <script>
+     window.onload = async()=>{
+       if(document.getElementById("take_notice").innerHTML === "1"){
+          onNotice();
+       }
+    }
+    function onNotice(){
+       document.getElementById("done_success").style.display="block";
+       sleep(1000);
+       
+    }
+    function sleep(ms){
+    return new Promise(resolve => setTimeout(()=>{
+        document.getElementById("done_success").style.display="none";
+    }, ms));
+    }
+     function setfilename(val)
+            {
+                filename = val.split('\\').pop().split('/').pop();
+                document.getElementById('wpName').value = filename;
+            }
+
+   </script>
+

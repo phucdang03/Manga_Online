@@ -1,0 +1,59 @@
+﻿@{
+    Layout = "_LayoutAuth";
+}
+<link rel="stylesheet" href="~/css/AuthRegistration.css">
+<link rel="stylesheet" href="~/css/Notification.css">
+<div class="sign section--bg" >
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="sign__content">
+                    <!-- authorization form -->
+                    <form class="sign__form">
+                        <a asp-controller="Home" asp-action="Index" class="sign__logo">
+                            <img src="~/lib/img/logo.svg" alt="">
+                        </a>
+
+                        <div class="sign__group">
+                            <input type="text" id="email" required class="sign__input" placeholder="Email">
+                            @* <p class="noti" id="noti-email">@Model.MessageEmail</p> *@
+                        </div>
+
+                        <div class="sign__group">
+                            <input type="password" id="newPasswordInput" required class="sign__input" placeholder="Password">
+                            <button type="button" id="btnNewPassword" onclick="showNewPassword()">
+                                <i class="icon ion-ios-eye icon-custom-password"></i>
+                            </button>
+                            @* <p class="noti" id="noti-email">@Model.MessagePassword</p> *@
+                        </div>
+
+                        <div class="sign__group sign__group--checkbox">
+                            <input id="remember" type="checkbox" checked>
+                            <label for="remember">Nhớ tài khoản</label>
+                        </div>
+
+                        <button class="sign__btn" type="button" onclick="GetIpUser()">Đăng Nhập</button>
+
+                        <span class="sign__text">Chưa có tài khoản? <a href="AuthRegistration">Đăng Ký</a></span>
+
+                        <span class="sign__text" style="display: none">
+                            <a>Quên mật khẩu?</a>
+                        </span>
+                    </form>
+                    <!-- end authorization form -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/Notification.js"></script>
+<script src="~/js/AuthLogin.js"></script>
+
+<script>
+    $(document).ready(()=>{
+       if(`@ViewBag.notice`){
+          ShowNotificationSuccess("Bạn đã được nâng hạng");
+       }
+    })
+</script>

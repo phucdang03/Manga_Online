@@ -1,0 +1,572 @@
+﻿@using Service.MangaOnline.Commons
+@{
+    ViewData["Title"] = "Search";
+}
+<link rel="stylesheet" href="~/css/MangaListManager.css">
+
+<!-- page title -->
+<section class="section section--first section--bg" data-bg="/img/section/section.jpg">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section__wrap">
+                    <!-- section title -->
+                    <h2 class="section__title">Tìm truyện tranh</h2>
+                    <!-- end section title -->
+
+                    <!-- breadcrumb -->
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb__item">
+                            <a asp-page="/Index">Trang chủ</a>
+                        </li>
+                        <li class="breadcrumb__item breadcrumb__item--active">Thể loại</li>
+                    </ul>
+                    <!-- end breadcrumb -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end page title -->
+<!-- filter -->
+<div class="filter">
+	<div class="container">
+		<div class="row">
+            <div class="col-12">
+                    <div class="filter__content">
+                        <div class="filter__items">
+                            <!-- filter item -->
+                            <div class="filter__item" id="filter__genre">
+                                <span class="filter__item-label">Thể loại:</span>
+
+                                <div class="filter__item-btn dropdown-toggle" role="navigation" id="filter-genre" 
+                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <input id="filter-category" type="button" value="Tất cả">
+                                    <span></span> 
+                                </div>
+
+                                <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-genre">
+                                    <li class="filter-ev">Tất cả</li>
+                                    @foreach (var cate in AllCategory.GetAll)
+                                    {
+                                        <li class="filter-ev">@cate.Name</li>
+                                    }
+                                </ul>
+                            </div>
+                            <!-- end filter item -->
+
+                            <!-- filter item -->
+                            <div class="filter__item" id="filter__status">
+                                <span class="filter__item-label">Trạng thái:</span>
+
+                                <div class="filter__item-btn dropdown-toggle" role="navigation" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <input id="filter-status" type="button" value="Tất cả">
+                                    <span></span>
+                                </div>
+
+                                <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-status">
+                                    <li class="filter-ev">Tất cả</li>
+                                    <li class="filter-ev">Hoàn thành</li>
+                                    <li class="filter-ev">Đang cập nhật</li>
+                                    <li class="filter-ev">Dừng cập nhật</li>
+                                </ul>
+                            </div>
+                            <!-- end filter item -->
+
+                            <!-- filter item -->
+                            <div class="filter__item" id="filter__sort">
+                                <span class="filter__item-label">Sắp xếp theo:</span>
+
+                                <div class="filter__item-btn dropdown-toggle" role="navigation" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <input id="filter-sort" type="button" value="Tất cả">
+                                    <span></span>
+                                </div>
+
+                                <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-sort">
+                                    <li class="filter-ev">Tất cả</li>
+                                    <li class="filter-ev">Ngày cập nhật</li>
+                                    <li class="filter-ev">Top view</li>
+                                    <li class="filter-ev">Top follower</li>
+                                </ul>
+                            </div>
+                            <!-- end filter item -->
+
+                            <!-- filter item -->
+                            <div class="filter__item" id="filter__rating">
+                                <span class="filter__item-label">Rating:</span>
+
+                                <div class="filter__item-btn dropdown-toggle" role="navigation" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <input id="filter-rating"  type="button" value="Tất cả">
+                                    <span></span>
+                                </div>
+
+                                <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-rating">
+                                    <li class="filter-ev">Tất cả</li>
+                                    <li class="filter-ev">1</li>
+                                    <li class="filter-ev">2</li>
+                                    <li class="filter-ev">3</li>
+                                    <li class="filter-ev">4</li>
+                                    <li class="filter-ev">5</li>
+                                </ul>
+                            </div>
+                            <!-- end filter item -->
+
+
+                        </div>
+
+                        <!-- filter btn -->
+                        <div class="label-apply">
+                            <div class="filter__item" style="margin-right: 20px; cursor: pointer;">
+                                <div id="refresh-fillterzzz">
+                                    <div class="btn-status-plink">
+                                        <i class="icon ion-ios-refresh-circle"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- end filter btn -->
+                    </div>
+            </div>
+		</div>
+	</div>
+</div>
+<!-- end filter -->
+<!-- catalog -->
+<div class="catalog" style="padding-top: 20px">
+    <div class="container">
+        <div class="row" id="content">
+            <!-- card -->
+            
+            <!-- end card -->
+
+            <!-- paginator -->
+              
+        </div>
+          <div class="col-12">
+                    <ul class="paginator">
+                        <li class="paginator__item paginator__item--prev">
+                            <a href="#" onclick="return false;" id="back-page-ev">
+                                <i class="icon ion-ios-arrow-back"></i>
+                            </a>
+                        </li>
+                        <li id="div-back-page" class="paginator__item">
+                                <a id="back-page">0</a>
+                        </li>
+                        <li class="paginator__item paginator__item--active">
+                                <a id="current-page">1</a>
+                        </li>
+                        <li id="div-next-page" class="paginator__item">
+                                <a id="next-page">2</a>
+                        </li>
+                        <li class="paginator__item paginator__item--next ">
+                            <a href="#" onclick="return false;" id="next-page-ev">
+                                <i class="icon ion-ios-arrow-forward"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- end paginator -->
+    </div>
+</div>
+<!-- end catalog -->
+
+ 
+<script>
+    // Use global variable from _Layout.cshtml
+    // var urlServiceManga is already declared globally
+    
+     $(document).ready(function () {
+        var stringQuery = "?";
+        var query = GetURLParameter('query');
+        var category = GetURLParameter('categoryName');
+        
+        console.log("Page loaded with parameters:");
+        console.log("- query:", query);
+        console.log("- category:", category);
+        console.log("- Current URL:", window.location.href);
+        
+        // Load search options từ API
+        loadSearchOptions();
+        
+        if (category !== null && category !== "" && category !== "null"){
+            $("#filter-category").val(category);
+            console.log("Set category filter to:", category);
+            
+            // Verify the value was set correctly
+            setTimeout(function() {
+                console.log("Verified category filter value:", $("#filter-category").val());
+            }, 100);
+        }
+        
+        // Set initial query and call API
+        getQueryString();
+        Call(stringQuery);
+        
+        // Also add debugging for all current filter values on load
+        setTimeout(function() {
+            console.log("All filter values after load:");
+            console.log("- Category:", $("#filter-category").val());
+            console.log("- Status:", $("#filter-status").val());  
+            console.log("- Sort:", $("#filter-sort").val());
+            console.log("- Rating:", $("#filter-rating").val());
+        }, 200);
+        
+        $("#refresh-fillterzzz").on("click", function(){
+            console.log("Resetting all filters");
+            $("#filter-category").val("Tất cả");
+            $("#filter-status").val("Tất cả");
+            $("#filter-sort").val("Tất cả");
+            $("#filter-rating").val("Tất cả");
+            $("#filter-author").val(""); 
+
+            resetPaging();
+            getQueryString();
+            Call(stringQuery);
+        });
+        
+        // Handle filter dropdown clicks
+        $(".filter-ev").on("click", function(event){
+            event.preventDefault();
+            var clickedText = $(this).text().trim();
+            
+            // Find the parent filter container and update the input value
+            var filterContainer = $(this).closest('.filter__item');
+            var inputElement = filterContainer.find('input[type="button"]');
+            
+            if (inputElement.length > 0) {
+                inputElement.val(clickedText);
+                console.log("Filter updated:", inputElement.attr('id'), "to:", clickedText);
+            }
+            
+            resetPaging();
+            setTimeout(function() {
+                getQueryString();
+                Call(stringQuery);
+            }, 300);
+        });
+        
+         $("#back-page-ev").on("click",async(event)=>{
+             var tmp = $("#current-page").html()*1;
+             if(tmp > 1){
+                 tmp-=1;
+                 $("#current-page").html(tmp);
+                 $("#back-page").html(tmp-1);
+                 $("#next-page").html(tmp+1);
+                 getQueryString();
+                 Call(stringQuery);
+             }
+             
+        });
+
+         $("#next-page-ev").on("click",async(event)=>{
+           
+             var tmp =$("#current-page").html()*1;
+             tmp+=1;
+             $("#back-page").html(tmp-1);
+             $("#next-page").html(tmp+1);
+             $("#current-page").html(tmp);
+             getQueryString();
+             Call(stringQuery);
+        });
+
+      function resetPaging(){
+             $("#back-page").html(0);
+             $("#next-page").html(2);
+             $("#current-page").html(1);
+      }
+      
+      function getQueryString(){
+        var params = new URLSearchParams();
+        
+        // Get current filter values
+        var categoryVal = $("#filter-category").val();
+        var statusVal = $("#filter-status").val();
+        var sortVal = $("#filter-sort").val();
+        var ratingVal = $("#filter-rating").val();
+        var authorVal = $("#filter-author").val();
+        
+        console.log("Current filter values:");
+        console.log("- Category:", categoryVal);
+        console.log("- Status:", statusVal);
+        console.log("- Sort:", sortVal);
+        console.log("- Rating:", ratingVal);
+        console.log("- Author:", authorVal);
+        
+        if(query && query.trim() !== ""){
+            params.append('query', query.trim());
+        }
+        if(categoryVal && categoryVal !== "Tất cả" && categoryVal.trim() !== ""){
+            params.append('categoryName', categoryVal.trim());
+            console.log("Adding categoryName to query:", categoryVal.trim());
+        }
+        if(statusVal && statusVal !== "Tất cả"){
+            params.append('status', getStatus(statusVal));
+        }
+        if(ratingVal && ratingVal !== "Tất cả"){
+            params.append('rating', ratingVal);
+        }
+        if(authorVal && authorVal.trim() !== "") {
+            params.append('authorName', authorVal.trim());
+        }
+        if(sortVal && sortVal !== "Tất cả"){
+            params.append('sortBy', GetSort(sortVal));
+        }
+        
+        params.append('page', $("#current-page").html());
+        params.append('pageSize', 6);
+        
+        stringQuery = "?" + params.toString();
+        console.log("Generated query string:", stringQuery);
+      }
+    });
+
+  
+
+     function renderList(result) {
+           if($("#back-page").html()*1 == 0){
+                $("#div-back-page").hide();
+             }else{
+                 $("#div-back-page").show();
+             }
+           $("div #content").html("");
+           
+           if (!result || result.length === 0) {
+               $("#content").html('<div class="col-12"><p class="text-center">Không tìm thấy truyện nào.</p></div>');
+               return;
+           }
+           
+            $.each(result, function (index, value) {
+                var viewCount = value.viewCount || 0;
+                var formattedView = formatView(viewCount);
+                
+                // Handle null or empty image with default fallback
+                var imageUrl = value.image && value.image.trim() !== "" 
+                    ? `/image/manga-image/${value.image}` 
+                    : '/image/manga-image/avatar-default.jpg';
+                
+                var data = `
+                 <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                    <div class="card">
+                        <div class="card__cover">
+                            <img src="${imageUrl}" alt="${value.name}" style="height: 237.03px; width: 160px;" onerror="this.src='/image/manga-image/avatar-default.jpg'">
+                            <a href="/Public/DetailManga?id=${value.id}" class="card__play">
+                                <i class="icon ion-ios-play"></i>
+                            </a>
+                        </div>
+                        <div class="card__content">
+                            <h3 class="card__title">
+                                <a href="/Public/DetailManga?id=${value.id}">${value.name}</a>
+                            </h3>
+                            <span class="card__category">`;
+
+                             if (value.categoryMangas && value.categoryMangas.length > 0) {
+                                value.categoryMangas.forEach((item)=>{
+                                    data+= `<a>${item.name}</a>`
+                                });
+                             }
+
+                            data+=`
+                            </span>
+                            <span class="card__rate"><i class="icon ion-ios-star"></i>${value.star || 0}</span>
+                            <span class="card__rate" style="margin-left: 5px;">
+                                <i class="icon ion-ios-eye"></i>
+                                ${formattedView}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                `;
+                $("#content").append(data);
+            });
+        }
+        function Call(stringQuery) {
+            var fullUrl = urlServiceManga + "/Manga/search" + stringQuery;
+            console.log("=== API CALL DEBUG ===");
+            console.log("Calling API with URL:", fullUrl);
+            
+            $.ajax({
+                url: fullUrl,
+                method: "GET",
+                dataType: "json", // Explicitly expect JSON
+                success: function (result) {
+                    console.log("=== API RESPONSE DEBUG ===");
+                    console.log("Full API Response:", result);
+                    console.log("Success:", result.success || result.Success);
+                    
+                    if(result.success || result.Success) {
+                        var data = result.data || result.Data;
+                        console.log("Search results:");
+                        console.log("- Count:", data ? data.length : 0);
+                        if (data && data.length > 0) {
+                            console.log("- First result:", data[0]);
+                            console.log("- Categories in first result:", data[0].categoryMangas);
+                        }
+                        renderList(data);
+                        updatePagination(result.pagination || result.Pagination);
+                    } else {
+                        console.error("Search failed:", result.message || result.Message);
+                        $("#content").html('<div class="col-12"><p class="text-center text-danger">Lỗi tìm kiếm: ' + (result.message || result.Message || "Không rõ lỗi") + '</p></div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("=== AJAX ERROR DEBUG ===");
+                    console.error("Status:", status);
+                    console.error("Error:", error);
+                    console.error("Response Text:", xhr.responseText);
+                    console.error("Status Code:", xhr.status);
+                    
+                    var errorMsg = "Lỗi kết nối server";
+                    if (xhr.status === 0) {
+                        errorMsg = "Không thể kết nối tới server. Kiểm tra xem Service.MangaOnline có đang chạy không?";
+                    } else if (xhr.status === 404) {
+                        errorMsg = "API endpoint không tồn tại (404). Kiểm tra URL: " + fullUrl;
+                    } else if (xhr.status >= 500) {
+                        errorMsg = "Lỗi server (" + xhr.status + "): " + (xhr.responseText || error);
+                    }
+                    
+                    $("#content").html('<div class="col-12"><p class="text-center text-danger">' + errorMsg + '</p><details><summary>Chi tiết lỗi</summary><pre>' + xhr.responseText + '</pre></details></div>');
+                }
+            });
+        }
+        
+        function GetUserData() {
+            try {
+                const user = localStorage.getItem("USER_DATA");
+                return user ? JSON.parse(user) : null;
+            } catch (error) {
+                console.error("Error parsing user data:", error);
+                return null;
+            }
+        }
+
+        function updatePagination(pagination) {
+            if(!pagination) return;
+            
+            var currentPage = pagination.currentPage || pagination.CurrentPage;
+            var hasPreviousPage = pagination.hasPreviousPage || pagination.HasPreviousPage;
+            var hasNextPage = pagination.hasNextPage || pagination.HasNextPage;
+            
+            $("#current-page").html(currentPage);
+            $("#back-page").html(currentPage - 1);
+            $("#next-page").html(currentPage + 1);
+            
+            if(hasPreviousPage) {
+                $("#div-back-page").show();
+            } else {
+                $("#div-back-page").hide();
+            }
+            
+            if(hasNextPage) {
+                $("#div-next-page").show();
+            } else {
+                $("#div-next-page").hide();
+            }
+        }
+
+        function getStatus(status){
+            switch (status) {
+            case "Hoàn thành":
+                return 0;
+            case "Đang cập nhật":
+                return 1;
+            case "Dừng cập nhật":
+                return 2;
+            default:
+                return null;
+            }
+        }
+
+        function loadSearchOptions() {
+            console.log("=== TESTING API CONNECTIVITY ===");
+            
+            // First, test if API server is running
+            $.ajax({
+                url: urlServiceManga + "/swagger/index.html",
+                method: "GET",
+                timeout: 5000,
+                success: function() {
+                    console.log("✓ API Server is running at", urlServiceManga);
+                    testApiEndpoints();
+                },
+                error: function(xhr, status, error) {
+                    console.error("✗ API Server is NOT running at", urlServiceManga);
+                    console.error("Error:", error, "Status:", xhr.status);
+                    $("#content").html('<div class="col-12"><div class="alert alert-danger"><h4>Lỗi kết nối API Server</h4><p>Không thể kết nối tới Service.MangaOnline ở <code>' + urlServiceManga + '</code></p><p><strong>Giải pháp:</strong></p><ol><li>Kiểm tra Service.MangaOnline project có đang chạy không</li><li>Chạy lệnh: <code>dotnet run</code> trong thư mục Service.MangaOnline</li><li>Kiểm tra port 5098 có được sử dụng không</li></ol></div></div>');
+                }
+            });
+        }
+        
+        function testApiEndpoints() {
+            console.log("=== TESTING API ENDPOINTS ===");
+            
+            // Test categories endpoint
+            $.ajax({
+                url: urlServiceManga + "/Manga/categories",
+                method: "GET",
+                dataType: "json",
+                success: function(result) {
+                    console.log("✓ Categories endpoint working:", result);
+                    if(result.success || result.Success) {
+                        var categories = result.data || result.Data;
+                        console.log("Available categories:", categories.map(c => c.name));
+                        console.log("Does 'Anime' exist?", categories.some(c => c.name === "Anime"));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("✗ Categories endpoint failed:", error, xhr.status);
+                }
+            });
+            
+            // Test basic search endpoint
+            $.ajax({
+                url: urlServiceManga + "/Manga/search?page=1&pageSize=1",
+                method: "GET", 
+                dataType: "json",
+                success: function(result) {
+                    console.log("✓ Basic search endpoint working:", result);
+                    if(result.success || result.Success) {
+                        var data = result.data || result.Data;
+                        console.log("Sample manga count:", data ? data.length : 0);
+                        if(data && data.length > 0) {
+                            console.log("Sample manga:", data[0].name, "with categories:", data[0].categoryMangas?.map(c => c.name));
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("✗ Basic search endpoint failed:", error, xhr.status);
+                }
+            });
+        }
+
+         function GetSort(name) {
+            switch (name) {
+                case 'Ngày cập nhật':
+                    return "ModifiedAt";
+                case 'Top view':
+                    return "ViewCount";
+                case 'Top follower':
+                    return "FollowCount";
+                default:
+                    return "ModifiedAt";
+            }
+        }
+        
+        // Helper functions
+        function GetURLParameter(name) {
+            return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+        }
+        
+        function formatView(viewCount) {
+            if (viewCount >= 1000000) {
+                return (viewCount / 1000000).toFixed(1) + 'M';
+            } else if (viewCount >= 1000) {
+                return (viewCount / 1000).toFixed(1) + 'K';
+            }
+            return viewCount.toString();
+        }
+
+
+</script>
+
+<script src="~/js/Notification.js"></script>

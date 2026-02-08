@@ -1,0 +1,102 @@
+﻿@using Newtonsoft.Json
+@using Service.MangaOnline.ResponseModels
+@{
+    ViewData["Title"] = "Reading History List";
+    ReadingHistoryRespone readingHistoryResponse = ViewBag.list;
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/DetailManga.css">
+
+<!-- page title -->
+<section class="section section--first section--bg" data-bg="/img/section/section.jpg">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="section__wrap">
+                    <!-- section title -->
+                    <h2 class="section__title">Lịch sử đọc truyện</h2>
+                    <!-- end section title -->
+                    <!-- breadcrumb -->
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb__item">
+                            <a asp-page="/Index">Trang chủ</a>
+                        </li>
+                        <li class="breadcrumb__item breadcrumb__item--active">Lịch sử</li>
+                    </ul>
+                    <!-- end breadcrumb -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- end page title -->
+@if (readingHistoryResponse.list.Count == 0)
+{
+    <div style="display: flex; justify-content: center; align-items: center">
+        <p class="breadcrumb__item breadcrumb__item--active" style="margin-left: 16px; margin-top: 16px">
+            Bạn chưa đọc truyện nào cả.
+        </p>
+    </div>
+}
+else
+{
+    <!-- catalog -->
+    <div class="catalog" style="padding-top: 20px">
+        <div class="container">
+            <div class="row">
+                <!-- card -->
+                @foreach (var manga in readingHistoryResponse.list)
+                {
+                    <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                        <div class="card">
+                            <div class="card__cover">
+                                <img src="/image/manga-image/@manga.Image" alt="@manga.Name" style="height: 237.03px; width: 160px;">
+                                <a href="/Public/DetailManga?id=@manga.Id" class="card__play">
+                                    <i class="icon ion-ios-play"></i>
+                                </a>
+                            </div>
+                            <div class="card__content">
+                                <h3 class="card__title">
+                                    <a href="/Public/DetailManga?id=@manga.Id">@manga.Name</a>
+                                </h3>
+                                <span class="card__category">
+                                    @{
+                                        foreach (var category in manga.CategoryMangas)
+                                        {
+                                            <a asp-page="/Public/CategoriesList" asp-route-cateName="@category.Name">@category.Name</a>
+                                        }
+                                    }
+                                </span>
+                                <span class="card__rate"><i class="icon ion-ios-star"></i>@manga.Star</span>
+                                <span class="card__category" style="display: block; margin-top: 5px; font-size: 12px; color: #999;">
+                                    <i class="icon ion-ios-time"></i> Đọc gần đây
+                                </span>
+
+
+                            </div>
+                        </div>
+                    </div>
+                }
+                <!-- end card -->
+            </div>
+        </div>
+    </div>
+    <!-- end catalog -->
+}
+}
+<script>
+    $(document).ready(function () {
+        let user = GetUserData()
+        $("#userId").val(user.userId);
+        resetNotiFollow();
+    });
+
+    function GetUserData() {
+        const user = localStorage.getItem("USER_DATA");
+        return $.parseJSON(user);
+        // {"userId":"ef20386b-2335-4f65-87b2-819e1aef6612","userName":"traicv","email":"enm55606@nezid.com","role":"UserNormal","avartar":null}
+    }
+</script>
+
+

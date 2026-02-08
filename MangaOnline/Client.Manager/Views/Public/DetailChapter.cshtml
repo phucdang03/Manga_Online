@@ -1,0 +1,210 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = ViewData["ChapterName"] ?? "Đọc truyện";
+    var mangaId = ViewData["MangaId"] ?? "";
+    var mangaName = ViewData["MangaName"] ?? "";
+    var chapterName = ViewData["ChapterName"] ?? "";
+}
+@* http://localhost:5030/public/DetailChapter?id=4360DDDF-49E1-424C-BA83-F52E6488A272 *@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+<div style="margin-top: 93px;">
+    <style>
+        #manga-pdf{
+            width: 100%;
+            height: 95vh;
+        }
+        .reading-info {
+            background: #1a1a1a;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+    
+    @if (!string.IsNullOrEmpty(mangaName.ToString()))
+    {
+        <div class="reading-info">
+            <h4>@mangaName - @chapterName</h4>
+        </div>
+    }
+    
+    <iframe id="manga-pdf" src="" frameborder="0"></iframe>
+    
+    <!-- Hidden inputs for reading history -->
+    <input type="hidden" id="mangaId" value="@mangaId" />
+    
+    <!-- Debug info (remove in production) -->
+    @if (!string.IsNullOrEmpty(ViewData["Error"]?.ToString()))
+    {
+        <div style="background: #ffcccc; padding: 10px; color: red;">
+            Error: @ViewData["Error"]
+        </div>
+    }
+    
+    <div style="background: #333; color: white; padding: 5px; font-size: 12px;">
+        Debug - Chapter ID: @ViewData["ChapterId"], Manga ID: @mangaId, Manga Name: @mangaName
+    </div>
+</div>
+</body>
+</html>
+
+<script>
+$(document).ready(function () {
+    console.log("=== DETAIL CHAPTER PAGE LOADED ===");
+    
+    // Check login status first
+    var user = GetUserData();
+    if (user && user.userId) {
+        console.log("User is logged in:", user.userName);
+        // Add to reading history immediately when page loads
+        addToReadingHistory();
+    } else {
+        console.log("User is not logged in, skipping reading history");
+    }
+    
+    // Then get the actual chapter content
+    GetIpUserByGetFile();
+});
+
+function GetFile(ipAddress) {
+    var id = GetURLParameter('id');
+    $.ajax({
+        url: `http://localhost:5098/Manga/GetChapter?id=${id}&ipAddress=${ipAddress}`,
+        type: "GET",
+        headers: {"ACCESS_TOKEN" : localStorage.getItem('ACCESS_TOKEN')},
+        success: function (response) {
+            var url = '/pdf/'+response.data;
+            $('#manga-pdf').attr('src', url);
+            OffLoading();
+        },
+        error: function () {
+            ShowNotificationError('Lỗi xảy ra khi tải truyện');
+        }
+    });
+}
+
+function addToReadingHistory() {
+    var user = GetUserData();
+    var mangaId = $("#mangaId").val();
+    
+    console.log("=== READING HISTORY DEBUG ===");
+    console.log("User data:", user);
+    console.log("Manga ID from hidden input:", mangaId);
+    console.log("Current URL:", window.location.href);
+    
+    // If mangaId is empty, try to get it from chapter API directly
+    if (!mangaId || mangaId.trim() === "" || mangaId.trim() === "00000000-0000-0000-0000-000000000000") {
+        console.log("Manga ID is empty, trying to get it from chapter API...");
+        var chapterId = GetURLParameter('id');
+        if (chapterId) {
+            getMangaIdFromChapter(chapterId, user);
+            return;
+        }
+    }
+    
+    if (user != null && mangaId && mangaId.trim() !== "" && mangaId.trim() !== "00000000-0000-0000-0000-000000000000") {
+        console.log("Adding to reading history - User:", user.userId, "Manga:", mangaId);
+        
+        $.ajax({
+            url: `/Manager/AddReadingHistory?userId=${user.userId}&mangaId=${mangaId}`,
+            type: "POST",
+            success: function (result) {
+                console.log("✓ Reading history API response:", result);
+                if (result.success) {
+                    console.log("✓ Successfully added to reading history:", result.message);
+                } else {
+                    console.error("⚠ Reading history failed:", result.message, result.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("✗ Reading history AJAX error:", error);
+                console.error("Response:", xhr.responseText);
+                console.error("Status:", status);
+            }
+        });
+    } else {
+        if (!user) {
+            console.log("⚠ Cannot add reading history - User not logged in");
+        } else if (!mangaId || mangaId.trim() === "" || mangaId.trim() === "00000000-0000-0000-0000-000000000000") {
+            console.log("⚠ Cannot add reading history - Invalid manga ID:", mangaId);
+        }
+    }
+}
+
+function getMangaIdFromChapter(chapterId, user) {
+    console.log("Getting manga ID from chapter API for chapter:", chapterId);
+    
+    $.ajax({
+        url: `http://localhost:5098/Manga/GetChapterInfo?id=${chapterId}`,
+        type: "GET",
+        success: function (response) {
+            console.log("Chapter API response:", response);
+            if (response && response.success && response.data && response.data.mangaId) {
+                var mangaId = response.data.mangaId;
+                console.log("Got manga ID from API:", mangaId);
+                $("#mangaId").val(mangaId); // Update hidden input
+                
+                // Now add to reading history
+                if (user && mangaId) {
+                    $.ajax({
+                        url: `/Manager/AddReadingHistory?userId=${user.userId}&mangaId=${mangaId}`,
+                        type: "POST",
+                        success: function (result) {
+                            console.log("✓ Reading history added via backup method:", result);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("✗ Backup reading history failed:", error);
+                        }
+                    });
+                }
+            } else {
+                console.error("⚠ Could not get manga ID from chapter API");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("✗ Failed to get chapter info:", error);
+        }
+    });
+}
+
+function GetIpUserByGetFile() {
+    OpenLoading();
+    $.ajax({
+        url: 'https://httpbin.org/ip',
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            // Dữ liệu trả về sẽ có dạng {"origin": "địa chỉ IP"}
+            const ipAddress = data.origin;
+            GetFile(ipAddress);
+        },
+        error: function () {
+            OffLoading();
+            ShowNotificationError('Thử lại đường truyền không ổn định');
+            GetFile('127.0.0.1'); // Fallback IP
+        }
+    });
+}
+
+// Helper functions
+function GetUserData() {
+    try {
+        const user = localStorage.getItem("USER_DATA");
+        return user ? JSON.parse(user) : null;
+    } catch (error) {
+        console.error("Error parsing user data:", error);
+        return null;
+    }
+}
+
+function GetURLParameter(name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+}
+</script>

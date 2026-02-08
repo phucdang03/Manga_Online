@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net" Version="0.1.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.16">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.16" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\image\avartar-user\8f49658d-8f6e-47b5-9982-51ed49bc21ea.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\avartar-user\avatar-default.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover2.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover3.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover4.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover5.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\covers\cover6.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\crown.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\crown2.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\huong-dan-theo-doi-truyen.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\manga-image\0ea4aafe-8a25-467c-a851-8e661b96708b.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\payment\payment-bg.png" />
+      <_ContentIncludedByDefault Remove="wwwroot\image\payment\qrcode.png" />
+    </ItemGroup>
+
+</Project>

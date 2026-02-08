@@ -1,0 +1,374 @@
+﻿@using Newtonsoft.Json
+@using Service.MangaOnline.Commons
+@using Service.MangaOnline.ResponseModels
+
+@{
+    Layout = "_Layout";
+	ViewData["title"] = "truyen";
+	var manga = (MangaResponse)ViewData["manga"]!;
+}
+
+<link rel="stylesheet" href="~/css/DetailManga.css">
+
+<!-- details -->
+<section class="section details">
+	<!-- details background -->
+	<div class="details__bg" data-bg="/lib/img/home/home__bg.jpg"></div>
+	<!-- end details background -->
+
+	<!-- details content -->
+	<div class="container">
+		<div class="row">
+			<!-- title -->
+			<div class="col-12">
+				<h1 class="details__title">@manga.Name</h1>
+			</div>
+			<!-- end title -->
+
+			<!-- content -->
+			<div class="col-10">
+				<div class="card card--details card--series">
+					<div class="row">
+						<!-- card cover -->
+						<div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-3">
+							<div class="card__cover">
+								<img src="/image/manga-image/@manga.Image" alt="@manga.Name"/>
+							</div>
+						</div>
+						<!-- end card cover -->
+
+						<!-- card content -->
+						<div class="col-12 col-sm-8 col-md-8 col-lg-9 col-xl-9">
+							<div class="card__content">
+								<div class="card__wrap">
+									<span class="card__rate"><i class="icon ion-ios-star"></i>@manga.Star</span>
+								</div>
+
+								<ul class="card__meta">
+									<li><span><i class="fa fa-user"></i> Tác giả: </span>@manga.AuthorName</li>
+									<li>
+										<span><i class="fa fa-rss"></i> Tình trạng: </span>
+										@{
+											var statusString = manga.Status switch
+											{
+												0 => "Hoàn thành",
+												1 => "Đang cập nhật",
+												2 => "Dừng cập nhật",
+												_ => ""
+											};
+										}
+										@statusString
+									</li>
+									<li>
+										<span><i class="fa fa-tags"></i> Thể loại:</span>
+										@{
+											var categories = manga.CategoryMangas;
+											foreach (var category in categories!)
+											{
+												<a asp-page="/Public/CategoriesList" asp-route-cateName="@category.Name">@category.Name</a>
+											}
+										}
+									</li>
+									<li><span><i class="fa fa-eye"></i> Lượt xem: </span>@manga.ViewCount</li>
+								</ul>
+
+								<div class="card__description card__description--details">
+									@manga.Description
+								</div>
+							</div>
+						</div>
+						<!-- end card content -->
+					</div>
+					<div>
+                    	<ul class="ratings" style="{margin-top: 5px}">
+                          <li class="star" id="star-5" onclick="handleRate(5)"></li>
+                          <li class="star" id="star-4" onclick="handleRate(4)"></li>
+                          <li class="star" id="star-3" onclick="handleRate(3)"></li>
+                          <li class="star" id="star-2" onclick="handleRate(2)"></li>
+                          <li class="star" id="star-1" onclick="handleRate(1)"></li>
+                        </ul>
+                    </div>
+					<div class="follow">
+							<div id="not-follow">
+								<input id="mangaId" value="@manga.Id" hidden/>
+								<button onclick="follow()" class="button-follow">
+									<i class="fa fa-heart"></i>
+									<span>Theo dõi</span>
+								</button>
+								<span><b>@manga.FollowCount</b> Lượt theo dõi</span>
+							</div>
+
+						 <div  id="da-follow" style="display: none"> 
+							<button onclick="unFollow()" class="button-unfollow"> 
+						 			<i class="fa fa-times"></i>
+									<span>Bỏ theo dõi</span>
+						 	</button>
+						 	<span><b>@manga.FollowCount</b> Lượt theo dõi</span>
+						 </div> 
+						<a id="add-chapter" style="display: none" href="/Manager/ViewAddChapter?id=@manga.Id" class="link-button">Thêm chapter</a>
+					</div>
+					
+				</div>
+			</div>
+			<!-- end content -->
+			
+			<!-- accordion -->
+            <div class="col-12 col-xl-6">
+            	<div class="card-body">
+            		<table class="accordion__list">
+            			<thead>
+            				<tr>
+            					<th>Số chương</th>
+            					<th>Tên</th>
+            					<th>Cập nhật</th>
+            				</tr>
+            			</thead>
+			            <tbody>
+			            @if (manga.Chapteres!=null)
+			            {
+				            foreach (var chapter in manga.Chapteres)
+				            {
+					            <tr>
+						            <th>@chapter.ChapterNumber</th>
+						            @if (chapter.Status==(int)ChapterEnum.Normal)
+						            {
+							            <td>
+								            <a href="/Public/detailChapter?id=@chapter.Id" class="chapter_name">@chapter.Name</a>
+							            </td>
+						            }
+						            else
+						            {
+							            <td style="display: flex" class="disabled">
+								            <a href="/Public/detailChapter?id=@chapter.Id" class="chapter_name">@chapter.Name</a>
+								            <p style="
+                                                color: yellow;
+                                                margin: 0px;
+                                            ">Vip</p>
+								            <div class="td-vip" style="background: black;width: 19%; position: absolute;
+                                               height: 21px;opacity: 0.3;"></div>
+							            </td>
+						            }
+						            <td>@chapter.CreatedAt.ToString("dd/MM/yy")</td>
+					            </tr>
+				            }
+			            }
+			            </tbody>
+            		</table>
+            	</div>
+            </div>
+            <!-- end accordion -->
+		</div>
+	</div>
+	<!-- end details content -->
+</section>
+<!-- end details -->
+
+<!-- content -->
+<section class="content">
+	<div class="content__head">
+		<div class="container">
+			<div class="row">
+				<div class="col-12">
+					<!-- content title -->
+					<h2 class="content__title">Diễn đàn</h2>
+					<!-- end content title -->
+
+					<!-- content tabs nav -->
+					<ul class="nav nav-tabs content__tabs" id="content__tabs" role="tablist">
+						<li class="nav-item">
+							<a class="nav-link active" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="true">Bình luận</a>
+						</li>
+					</ul>
+					<!-- end content tabs nav -->
+
+					<!-- content mobile tabs nav -->
+					<div class="content__mobile-tabs" id="content__mobile-tabs">
+						<div class="content__mobile-tabs-btn dropdown-toggle" role="navigation" id="mobile-tabs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<input type="button" value="Bình Luận">
+							<span></span>
+						</div>
+
+						<div class="content__mobile-tabs-menu dropdown-menu" aria-labelledby="mobile-tabs">
+							<ul class="nav nav-tabs" role="tablist">
+								<li class="nav-item"><a class="nav-link active" id="1-tab" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="true">Bình luận</a></li>
+							</ul>
+						</div>
+					</div>
+					<!-- end content mobile tabs nav -->
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-12 col-lg-8 col-xl-8">
+				<!-- content tabs -->
+				<div class="tab-content" id="myTabContent">
+					<div class="tab-pane fade show active" id="tab-1" role="tabpanel" aria-labelledby="1-tab">
+						<div class="row">
+							<!-- comments -->
+							<div class="col-12">
+								<div class="comments">
+									<ul class="comments__list">
+										
+									</ul>
+
+									<div class="form">
+										<textarea id="value-cmt" class="form__textarea" placeholder="Viết bình luận"></textarea>
+										<button onclick="postCmt()" class="form__btn">Gửi</button>
+									</div>
+								</div>
+							</div>
+							<!-- end comments -->
+						</div>
+					</div>
+				</div>
+				<!-- end content tabs -->
+			</div>
+		</div>
+	</div>
+</section>
+
+
+
+<script>
+   let rate;
+	const renderRate = (_rate)=>{
+		  for (let i=1;i<=5;i++){
+                  			 document.getElementById(`star-${i}`).style.color = "#c9c9c9";
+                  		 }
+		  for (let i=1;i<=_rate;i++){
+         			 document.getElementById(`star-${i}`).style.color = "#e19414";
+         		 }
+	}
+	const handleRate= (_rate)=>{
+		 rate = _rate;
+		 renderRate(rate);
+	}
+	
+	if(GetUserData()!=null){
+        const role = GetUserData().role;
+		if (role==='Admin'){
+			$('#add-chapter').show();
+		}
+		if (role==='Admin'||role==='UserVip'){
+			$('.td-vip').hide();
+		}
+		// $('#da-follow').show();
+        // $('#not-follow').show();
+	}
+   
+
+	 $(document).ready(function() {
+	    renderRate();
+		checkFollow();
+		loadCmt();
+
+	 })
+
+	 const renderBtnFollow = (check)=>{
+		if(check){
+			$("#da-follow").hide();
+		    $("#not-follow").show();
+		}else{
+			$("#not-follow").hide();
+		    $("#da-follow").show();
+		}
+	 }
+	
+	 const follow=()=>{
+		if(GetUserData()!=null){
+			 var mangaId = $("#mangaId").val();
+			 var user = GetUserData();
+				 $.ajax({
+					url: urlServiceManga + `/Manga/FollowManga?userId=${user.userId}&mangaId=${mangaId}`,
+					type:"post",
+					success: function (result) {
+						checkFollow();
+						ShowNotificationSuccess("Đã thêm vào danh sách theo dõi");
+	
+					}
+				});
+		}else {
+			window.location.href = 'http://localhost:5030/Auth/AuthLogin';
+		}
+	 }
+
+	 const postCmt = ()=>{
+		if(GetUserData()!=null){
+			 var mangaId = $("#mangaId").val();
+			 var user = GetUserData();
+			 var value = $("#value-cmt").val();
+			 $("#value-cmt").val("");
+			 if(!value){
+					ShowNotificationError("Không được để trống");
+					 return;
+			 }
+				 $.ajax({
+					url: urlServiceManga + `/Manga/Comment?userId=${user.userId}&mangaId=${mangaId}&value=${value}`,
+					type:"post",
+					success: function (result) {
+					  //== render cmt
+					  loadCmt();
+					}
+				});
+		}else {
+			window.location.href = 'http://localhost:5030/Auth/AuthLogin';
+		}
+	 }
+
+	  const loadCmt = ()=>{
+	     var mangaId = $("#mangaId").val();
+		     $.ajax({
+                url: urlServiceManga + `/Manga/Comment?mangaId=${mangaId}`,
+                success: function (result) {
+					var content="";
+				     result.data.forEach((value)=>{
+					     content+=`
+						    <li class="comments__item">
+												<div class="comments__autor">
+														<img class="comments__avatar" src="${value.imgUser || '/lib/img/avatar-default.jpg'}" alt="">
+													<span class="comments__name">${value.nameUser}</span>
+													<span class="comments__time">${value.date}</span>
+												</div>
+												<p class="comments__text">${value.content}</p>
+											</li>
+
+						 `
+						 $(".comments__list").html(content);
+					 })
+                }
+            });
+	 }
+
+	  const unFollow=()=>{
+		 var mangaId = $("#mangaId").val();
+		 var user = GetUserData();
+		     $.ajax({
+                url: urlServiceManga + `/Manga/FollowManga?userId=${user.userId}&mangaId=${mangaId}`,
+				type:"delete",
+                success: function (result) {
+					console.log("result un f",result);
+					checkFollow();
+					ShowNotificationSuccess("Đã xoá khỏi danh sách theo dõi");
+                }
+            });
+	 }
+
+	 const checkFollow=()=>{
+		if(GetUserData()!=null){
+			 var mangaId = $("#mangaId").val();
+			 var user = GetUserData();
+				 $.ajax({
+					url: urlServiceManga + `/Manga/CheckFollowManga?userId=${user.userId}&mangaId=${mangaId}`,
+					success: function (result) {
+						console.log("result",result);
+					   renderBtnFollow(!result.data);
+					}
+				});	
+		}
+	 }
+	
+</script>
+<script src="~/js/Notification.js"></script>

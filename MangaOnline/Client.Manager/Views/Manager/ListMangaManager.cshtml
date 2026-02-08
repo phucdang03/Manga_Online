@@ -1,0 +1,277 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Service.MangaOnline.Commons
+@using Service.MangaOnline.ResponseModels
+
+
+@{
+    Layout = "_Layout";
+    var listManga = (List<MangaResponse>?)ViewData["ListManga"];
+    var genre = ViewData["genre"];
+    var status = ViewData["status"];
+    var statusOff = ViewData["statusOff"];
+    var sort = ViewData["sort"];
+    var index = (int)ViewData["index"]!;
+    var lastPage = (int)ViewData["LastPage"]!;
+}
+<link rel="stylesheet" href="~/css/Notification.css">
+<link rel="stylesheet" href="~/css/MangaListManager.css">
+@{
+    var routeUrl = Url.RouteUrl(ViewContext.RouteData.Values);
+    routeUrl = routeUrl + "?genre=" + genre + "&status=" + status + "&statusOff=" + statusOff + "&sort=" + sort + "&index=";
+}
+<div class="container border-list">
+<div class="row">
+<div class="col-lg-12">
+<form method="get">
+    @* filter *@
+    <div class="border-filter">
+        <!-- filter item -->
+        <div class="filter__item" id="filter__genre">
+            <span class="filter__item-label">Thể loại:</span>
+
+            <div class="filter__item-btn dropdown-toggle" role="navigation" id="filter-genre"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <input type="button" value="@genre">
+                <input asp-for="@genre" type="text" hidden/>
+                <span></span>
+            </div>
+
+            <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-genre">
+                <li>Tất cả</li>
+                @foreach (var cate in AllCategory.GetAll)
+                {
+                    <li>@cate.Name</li>
+                }
+            </ul>
+        </div>
+
+        <div class="filter__item" id="filter__status">
+            <span class="filter__item-label">Trạng thái:</span>
+
+            <div class="filter__item-btn dropdown-toggle" role="navigation" id="filter-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <input type="button" value="@status">
+                <input asp-for="@status" type="hidden">
+                <span></span>
+            </div>
+
+            <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-status">
+                <li>Tất cả</li>
+                <li>Hoàn thành</li>
+                <li>Đang cập nhật</li>
+                <li>Dừng cập nhật</li>
+            </ul>
+        </div>
+        <div class="filter__item" id="off__status">
+            <span class="filter__item-label">Ẩn/Hiện:</span>
+            <div class="filter__item-btn dropdown-toggle" role="navigation" id="off-status" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <input type="button" value="@statusOff">
+                <input asp-for="@statusOff" type="hidden">
+                <span></span>
+            </div>
+            <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="off-status">
+                <li>Tất cả</li>
+                <li>Đang ẩn</li>
+                <li>Đang hiện</li>
+            </ul>
+        </div>
+        <div class="filter__item" id="filter__sort">
+            <span class="filter__item-label">Sắp xếp:</span>
+            <div class="filter__item-btn dropdown-toggle" role="navigation" id="Sort" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <input type="button" value="@sort">
+                <input asp-for="@sort" type="hidden">
+                <span></span>
+            </div>
+            <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="Sort">
+                <li>Tất cả</li>
+                <li>Lượt xem cao</li>
+                <li>Lượt đánh giá cao</li>
+                <li>Lượt theo dõi cao</li>
+            </ul>
+        </div>
+        <div class="label-apply">
+            <div class="filter__item" style="margin-right: 20px;">
+                <a href="/Manager/ListManga">
+                    <div class="btn-status-plink">
+                        <i class="icon ion-ios-refresh-circle"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="filter__item">
+                <button class="btn-status-plink" type="submit">
+                    Áp dụng
+                </button>
+            </div>
+        </div>
+        <!-- end filter item -->
+    </div>
+    @* filter *@
+</form>
+<div class="main-box clearfix">
+    <div class="table-responsive">
+        <table border="1px" class="table table-hover table-dark user-list">
+            <thead>
+            <tr>
+                <th scope="col">Ảnh bìa</th>
+                <th scope="col">Tên manga</th>
+                <th scope="col">Tác giả</th>
+                <th scope="col">Thể loại</th>
+                <th scope="col">Thông số</th>
+                <th scope="col">Năm</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (listManga != null)
+            {
+                @foreach (var manga in listManga)
+                {
+                    <tr>
+                        <th style="text-align: center;padding: 10px 0px;">
+                            <img class="avatar1" src="/image/manga-image/@manga.Image" alt="">
+                        </th>
+                        <th class="name-manga">@manga.Name</th>
+                        <th>@manga.AuthorName</th>
+                        <th>
+                            <span class="card__category">
+                                @foreach (var categoryManga in manga.CategoryMangas)
+                                {
+                                    <a asp-page="/Public/CategoriesList" asp-route-cateName="@categoryManga.Name">@categoryManga.Name</a>
+                                }
+                            </span>
+                        </th>
+                        <th>
+                            <p>
+                                <span class="card__rate" style="color: #a1a1a1">
+                                    <i class="icon ion-ios-star"></i>@manga.Star
+                                </span>
+                            </p>
+                            <p>
+                                <span class="card__rate" style="color: #a1a1a1">
+                                    <i class="icon ion-ios-eye"></i>@await Component.InvokeAsync("FormatNumber", manga.ViewCount)
+                                </span>
+                            </p>
+                            <p>
+                                <span class="card__rate" style="color: #a1a1a1">
+                                    <i class="icon ion-ios-people"></i>@await Component.InvokeAsync("FormatNumber", manga.FollowCount)
+                                </span>
+                            </p>
+                        </th>
+                        <th>@manga.CreatedAt!.Value.Year</th>
+                        <th>
+                            @{
+                                var statusString = manga.Status switch
+                                {
+                                    (int)MangaStatus.Done => "Hoàn thành",
+                                    (int)MangaStatus.Updating => "Đang cập nhật",
+                                    (int)MangaStatus.StopUpdating => "Dừng cập nhật",
+                                    _ => ""
+                                    };
+                            }
+                            @statusString
+                        </th>
+                        <th >
+                            <div style="display: flex;    justify-content: center;">
+                                <span id="isActive-@manga.Id">
+                                    @if (manga.IsActive)
+                                    {
+                                        <button class="btn-status-green" type="submit" onclick="ChangeIsActive('@manga.Id','@manga.IsActive')">
+                                            <i class="icon ion-ios-eye"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-status-red" type="submit" onclick="ChangeIsActive('@manga.Id','@manga.IsActive')">
+                                            <i class="icon ion-ios-eye-off"></i>
+                                        </button>
+                                    }
+                                </span>
+                                <form method="get"></form>
+                                <a href="/Manager/AddManga?id=@manga.Id">
+                                    <button class="btn-status-blue" type="submit" style="margin-left: 5px;">
+                                        <i class="icon ion-ios-create"></i>
+                                    </button>
+                                </a>
+                            </div>
+                        </th>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+    <!-- paginator -->
+    <div class="col-12">
+        <ul class="paginator">
+            @{
+                var back = index > 1 ? "" : "disabled";
+                var next = index != lastPage ? "" : "disabled";
+            }
+            <li class="paginator__item paginator__item--prev @back">
+
+                <a href="@routeUrl@(index - 1)" class="">
+                    <i class="icon ion-ios-arrow-back"></i>
+                </a>
+            </li>
+            @{
+                if (index > 1)
+                {
+                    <li class="paginator__item ">
+                        <a href="@routeUrl@(index - 1)">@(index - 1)</a>
+                    </li>
+                }
+                <li class="paginator__item paginator__item--active">
+                    <a>@index</a>
+                </li>
+                if (index != lastPage)
+                {
+                    <li class="paginator__item">
+                        <a href="@routeUrl@(index + 1)">@(index + 1)</a>
+                    </li>
+                }
+            }
+            <li class="paginator__item paginator__item--next @next">
+                <a href="@routeUrl@(index + 1)">
+                    <i class="icon ion-ios-arrow-forward"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- end paginator -->
+</div>
+
+</div>
+</div>
+</div>
+
+<script src="~/js/Notification.js"></script>
+<script>
+function ChangeIsActive(mangaId,isActive) {
+  $.ajax({
+          url: 'http://localhost:5098/Manga/ChangeIsActive',
+          type: "PUT",
+          headers: {"ACCESS_TOKEN": localStorage.getItem('ACCESS_TOKEN')},
+          data: {
+              mangaId: mangaId
+          }, success: function () {
+              ShowNotificationSuccess('Cập nhật thành công');
+              if (isActive==='True'){
+                  $('#isActive-'+mangaId).html(`
+                  <button class="btn-status-red" type="submit" onclick="ChangeIsActive('${mangaId}','False')">
+                        <i class="icon ion-ios-eye-off"></i>
+                  </button>
+                `);
+              }else {
+                  $('#isActive-'+mangaId).html(`
+                  <button class="btn-status-green" type="submit" onclick="ChangeIsActive('${mangaId}','True')">
+                        <i class="icon ion-ios-eye"></i>
+                  </button>
+                  `);    
+              }
+              
+          }, error: function () {
+              ShowNotificationError('Cập nhật thất bại');
+          }
+      });
+}
+</script>

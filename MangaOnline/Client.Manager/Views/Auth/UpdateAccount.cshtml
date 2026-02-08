@@ -1,0 +1,165 @@
+﻿@using Newtonsoft.Json;
+@{
+    ViewData["Title"] = "Update Account";
+    Layout = "_LayoutAuth";
+}
+<link rel="stylesheet" href="~/css/AuthRegistration.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.0.6/ethers.umd.min.js" integrity="sha512-msnGRH7zMONtMZBH0kCPB4vKzJ3mU6RImgt9lnZ2G2bXotCjfaTaICllKzT0pwlusVsyCx/xqN2/xkanDyW4JQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<div>
+    <input style="display:none" id="gmail" value="n/a"/>
+<div class="container">
+        <div id="navbar" style="color: #c9c9c9; min-height:25px">
+        <span id="text"></span>
+            </div>
+        <div class="row">
+            <div class="col-12" style="padding: 0px">
+                <div class="sign__content" style="padding: 0px; margin: 0px; min-height: 90vh">
+                    <form class="sign__form" styled="width:560px;padding: 0px">
+
+                        <div id="page1">
+                            <div style="color: white; margin-bottom: 10px; font-size: 20px; text-align:center">Payment</div>
+                            <div style="color: #c9c9c9; margin-bottom: 5px; text-align:center">Gói premium chỉ với 10usdc</div>
+                             <div class="sign__group" id="box-bg" style="max-width: 300px">
+                            <img style="width: 300px ; height: auto" src="~/image/payment/payment-bg.png"/>
+                        </div>
+                         <button type="button" style="width:300px" class="sign__btn" id="btn-connect" onclick="connectWallet()">
+                            Connect Wallet
+                        </button>
+                        </div>
+                               <div class="sign__group" id="box-qr" style="display:none; flex-direction:column; align-items: center">
+                                   <img src="~/image/payment/qrcode.png"/>
+                                    <div style="color: #fff; text-align:center; font-size:12px; margin-top: 3px; display: flex">
+                                        <div style="cursor: pointer" onclick="handleCopy()">0xeaddd8a496a1ef9839e9a183437a9fa15fa5a249</div>
+                                    </div>
+                               </div>
+                        <div class="sign__group" id="box-hash" style="display:none">
+                            <input id="hash" required class="sign__input" placeholder="Input hash transaction">
+                              </div>
+                        <button type="button" style="width:300px;display:none; margin-top: 0px" class="sign__btn" id="btn-check" onclick="handleCheck()">
+                                  Check
+                              </button>
+                    </form>
+
+                   
+                    <form method="post" asp-action="PostUpdateAccount" style="display: none" id="form">
+                        <input id="state-post" name="gmailUserUpdate">
+                        <input id="hashF" name="hashForm"/>
+                        <input id="fromF" name="fromForm"/>
+                        <input id="toF" name="toForm"/>
+                        <input id="valueF" name="valueForm"/>
+                    </form>
+                </div>
+                <div id="box-des"  style="color: #c9c9c9;display: none; flex-direction:column; margin-bottom: 5px">
+                                <div>Thanh toán bằng crypto(10 usdc), scan qr code bên trên</div>
+                    <div>Sau khi gửi thành công hãy paste transaction hash vào ô bên trên để chúng tôi xác nhận giao dịch của bạn</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const usdc = '0x47849e7E6a619545A1306E8db461d87D35BE3C7e'; 
+    const walletDev = "0xeaddd8a496a1ef9839e9a183437a9fa15fa5a249"; // to
+    const fee = 10 * 10 ** 6; // 10 usdc
+    let wallet ;
+    let isConnect = false;
+    let loading = false;
+    let usdcContract; 
+    let provider;
+   
+
+    window.onload = async()=>{
+        changeNetwork();
+        var user= GetUserData();
+    }
+    const changeNetwork = async () => {
+        if (window.ethereum) {
+            try {
+                const { chainId } = await provider.getNetwork()
+                if (chainId !== 5) throw 'Error network'
+                console.log('chainId', chainId)
+            } catch (error) {
+                await window.ethereum.request({
+                    id: 1,
+                    jsonrpc: '2.0',
+                    method: 'wallet_switchEthereumChain',
+                    params: [
+                        {
+                            chainId: '0x5',
+                        },
+                    ],
+                })
+            }
+        }
+        else{
+          alert('You need install metamask') 
+         }
+    }
+     
+
+    const connectWallet = async()=> {
+        changeNetwork();
+    if (window.ethereum) {
+         provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/eth_goerli");
+        const [address] = await window.ethereum.request({ method: "eth_requestAccounts" }, []);
+        isConnect = true;
+        wallet=address;
+            document.getElementById("text").innerHTML = "Your wallet: " + address;
+            document.getElementById("page1").style.display='none';
+            document.getElementById("box-qr").style.display = 'flex';
+            document.getElementById("box-hash").style.display = 'flex';
+            document.getElementById("btn-check").style.display = 'flex';
+            document.getElementById("box-des").style.display = 'flex';
+    } 
+    }
+
+      const handleCheck = async()=> {
+        let hash = document.getElementById("hash").value;
+        let receipt;
+        try{
+            receipt = await provider.getTransactionReceipt(hash);
+        }catch(ex){
+            alert('Rpc has issue')
+            return;
+        }
+        const status = receipt.status;
+        const from = ethers.toBeHex(receipt.logs[0].topics[1]);
+        const to = ethers.toBeHex(receipt.logs[0].topics[2]);
+        const value = ethers.toNumber(receipt.logs[0].data);
+        console.log(status,from,to,value);
+        if(status===1&& from === wallet && to ===walletDev && value >= fee ){
+            const gmailUser = document.getElementById("gmail").value;
+            console.log(gmailUser)
+            document.getElementById("state-post").value = gmailUser;
+             document.getElementById("hashF").value = hash;
+              document.getElementById("fromF").value = from;
+               document.getElementById("toF").value = to;
+                 document.getElementById("valueF").value = value/1e6;
+            document.getElementById("form").submit();
+        }else{
+          alert('Hash code not true!!!')
+        }
+    }
+
+    const handleCopy= ()=>{
+        navigator.clipboard.writeText(walletDev);
+    }
+
+     $(document).ready(function () {
+         var user = GetUserData();
+         $("#gmail").attr('value', user.email);
+         if('@ViewBag.notice'){
+             Swal.fire({
+                  icon: 'error',
+                  title: 'Oops...',
+                  text: 'Mạng blockchain hiện tại đang nghẽn, vui lòng thử lại trong thời gian tới',
+                  footer: '<a href="/">Back to home</a>'
+})
+         }
+    });
+      function GetUserData() {
+            const user = localStorage.getItem("USER_DATA");
+            return $.parseJSON(user);
+      }
+</script>

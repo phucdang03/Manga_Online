@@ -1,0 +1,40 @@
+﻿.alert-noti {
+    position: fixed;
+    z-index: 99999;
+    padding: 15px;
+    border-radius: 10px;
+    top: 8%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.alert-error{
+    background-color: #F2DEDE;
+}
+.alert-success{
+    background-color: #D4EDDA;
+}
+
+.icon-noti-success {
+    color: #96C83D;
+}
+.icon-noti-error {
+    color: #A94442;
+}
+
+.icon-btn {
+    position: absolute;
+    right: 18px;
+    font-size: 30px;
+    top: 3px;
+}
+
+.content-noti {
+    margin-left: 10px;
+    margin-right: 30px;
+}
+#alertNotificationSuccess{
+    display: none;
+}
+#alertNotificationError{
+    display: none;
+}

@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "History";
+}
+<div>
+<div class="container">
+        <div class="row" style="margin-top: 100px; margin-left: 20%; margin-right: 80%; margin-bottom:100px; padding-top: 50px;">
+                <table class="table" style="color: white">
+                  <thead>
+                    <tr>
+                      <th scope="col" style="min-width:220px;">Date</th>
+                      <th scope="col" style="min-width:120px;">Value</th>
+                      <th scope="col" style="min-width:120px;">To</th>
+                      <th scope="col" style="min-width:200px;"></th>
+                    </tr>
+             </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+             
+        </div>
+    </div>
+</div>
+<script>
+     $(document).ready(function () {
+        ShowAllReservation();
+        function renderList(result) {
+            $.each(result, function (index, value) {
+                $("tbody").append($("<tr>"));
+                appendElement = $("tbody tr").last();
+                appendElement.append($("<td>").html(value["date"]));
+                appendElement.append($("<td>").html(value["value"]+" USDC"));
+                appendElement.append($("<td>").html("MangaOnline"));
+               appendElement.append($("<td>").html("<a href=" + "https://goerli.etherscan.io/tx/" +value["hash"] + " target=\"_blank\" >View on block explore</a>"));
+            });
+        }
+        function ShowAllReservation() {
+            $("table tbody").html("");
+            var user = GetUserData();
+            $.ajax({
+                url: "http://localhost:5098/Auth/History?gmail="+ user.email,
+                success: function (result) {
+                    console.log(result.data.value);
+                    renderList(result.data.value);
+                }
+            });
+        }
+           function GetUserData() {
+                const user = localStorage.getItem("USER_DATA");
+                return $.parseJSON(user);
+    // {"userId":"ef20386b-2335-4f65-87b2-819e1aef6612","userName":"traicv","email":"enm55606@nezid.com","role":"UserNormal","avartar":null}
+            }
+    });
+</script>

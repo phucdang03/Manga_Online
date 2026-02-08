@@ -1,0 +1,159 @@
+﻿@using Service.MangaOnline.Commons
+
+@{
+    Layout = "_Layout";
+}
+<link rel="stylesheet" href="~/css/AddManga.css">
+<div class="sign section--bg">
+    <div class="container-add">
+        <div class="row">
+            <div class="col-12">
+                <div class="sign__content" style="padding-top: 100px;">
+                    <!-- add form -->
+                    <form enctype="multipart/form-data" class="sign__form form-addManga">
+                        <input type="text" id="MangaId" hidden/>
+                        <div class="title-addManga">
+                            <h1>Thêm Manga</h1>
+                        </div>
+                        <div class="col-12" style="display: flex;max-height: 371px">
+                            <div class="col-sm-4">
+                                <div class="input-group-add">
+                                    <p class="input-title">Tên Manga</p>
+                                    <input id="Name" type="text" required maxlength="50" class="sign__input" placeholder="dưới 50 ký tự">
+                                    <p class="noti" id="name-message"></p>
+                                </div>
+                                <div class="input-group-add">
+                                    <p class="input-title">Tên tác giả</p>
+                                    <input id="AuthorName" type="text" required maxlength="20" class="sign__input" placeholder="dưới 20 ký tự">
+                                    <p class="noti" id="AuthorName-message"></p>
+                                </div>
+                                <div class="input-group-add">
+                                    <p class="input-title">Mô tả</p>
+                                    <textarea id="myTextarea"
+                                        class="sign__input textarea-description" ></textarea>
+                                    <p class="noti" id="myTextarea-message"></p>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="input-group-add">
+                                    <div class="filter__item" id="filter__rate" style="padding-top: 25px; z-index: 10">
+                                        <div class="filter__item-btn dropdown-toggle btn-dropdown-checkbox" role="button" id="filter-rate" data-toggle="dropdown">
+                                            <div class="filter__range name-checkbox">
+                                                <div id="filter__imbd-start" style="display: none"></div>
+                                                <div id="filter__imbd-end" style="display: none"></div>
+                                                Thể loại
+                                            </div>
+                                            <span></span>
+                                        </div>
+                                        <div id="dropdown-category" class=" hide-dropdown dropdown-checkbox">
+                                            <span class="filter__item-label" style="display: none; "></span>
+                                            @{
+                                                foreach (var category in AllCategory.GetAll)
+                                                {
+                                                    <div class="sign__group sign__group--checkbox checkbox-dropdown">
+                                                        <input id="@category.Id" name="CategoriesId" value="@category.Id" type="checkbox">
+                                                        <label for="@category.Id">@category.Name</label>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <!-- end filter item -->
+                                    <p class="noti" id="noti-category"></p>
+                                </div>
+
+                                <div class="input-group-add">
+                                    <div class="filter__item" id="filter__quality">
+                                        <div class="filter__item-btn dropdown-toggle btn-dropdown-checkbox" style="padding-left: 20px;margin-top: 25px;" role="navigation" id="filter-quality" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <input id="status-manga" value="Trạng thái" type="button">
+                                            <input id="status-manga-value" value="" hidden/>
+                                            <span></span>
+                                        </div>
+                                        <ul class="filter__item-menu dropdown-menu scrollbar-dropdown"
+                                            aria-labelledby="filter-quality">
+                                            <li value="@((int)MangaStatus.Done)">Hoàn thành</li>
+                                            <li value="@((int)MangaStatus.Updating)">Đang cập nhật</li>
+                                            <li value="@((int)MangaStatus.StopUpdating)">Dừng cập nhật</li>
+                                        </ul>
+                                    </div>
+                                    <p class="noti" id="noti-status"></p>
+                                </div>
+                                <div class="input-group-add">
+                                    <p class="input-title">Hoạt dộng</p>
+                                    <div class="radio-group ">
+                                        <label class="container active-input" value="true">
+                                            Hiện thị <input name="IsActive" value="true" type="radio" checked>
+                                            <span class="checkmark"></span>
+                                        </label>
+                                        <label class="container active-input">
+                                            Ẩn <input name="IsActive" value="false" type="radio">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </div>
+                                    <p class="noti" id="name-message"></p>
+                                </div>
+                                <div class="input-group-add">
+                                    <div class="input-group-add">
+                                        <p class="input-title">Năm xuất bản</p>
+                                        <input id="input-createdAt" type="text" required maxlength="4" class="sign__input">
+                                        <p class="noti" id="CreatedAt"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 update-image-file">
+                                <img class="image-manga" src="~/lib/img/default-placeholder.png" id="preview">
+                                <input
+                                    type="file"
+                                    required
+                                    id="fileInput"
+                                    class="input-file-image"
+                                    accept=".png, .jpg, .jpeg"/>
+                                <p class="noti" id="fileInput-message"></p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6" style="max-height: 120px;">
+                            <button class="sign__btn" id="submitBtn" type="submit">Tạo Manga</button>
+                        </div>
+
+                    </form>
+                    <!-- add form -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/AddManga.js"></script>
+@{
+    bool CheckCategoryId(Guid categoryId)
+    {
+        if (Model.MangaUpdate is not null)
+        {
+            foreach (var categoryMangas in Model.MangaUpdate.CategoryMangas)
+            {
+                if (categoryMangas.CategoryId == categoryId)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    string GetStatusMaga(int? status)
+    {
+        if (status is not null)
+        {
+            switch (status)
+            {
+                case 0:
+                    return "Hoàn thành";
+                case 1:
+                    return "Đang cập nhật";
+                case 2:
+                    return "Dừng cập nhật";
+            }
+        }
+        return "Trạng thái";
+    }
+
+}
