@@ -1,0 +1,423 @@
+@using Service.MangaOnline.Commons
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600%7CUbuntu:300,400,500,700" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-reboot.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-grid.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/owl.carousel.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/jquery.mCustomScrollbar.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/nouislider.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/ionicons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/plyr.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/photoswipe.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/default-skin.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/main.css" />
+    <link rel="stylesheet" href="~/css/_Layout.css" />
+    <link rel="stylesheet" href="~/css/Loading.css" />
+    <!-- Font-Awesome icon -->
+    <!-- Font Awesome CDN with tracking protection bypass -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" 
+          integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+    
+    <!-- Fallback for tracking protection issues -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if FontAwesome loaded after 3 seconds
+            setTimeout(function() {
+                var testElement = document.createElement('i');
+                testElement.className = 'fas fa-home';
+                testElement.style.position = 'absolute';
+                testElement.style.left = '-9999px';
+                testElement.style.fontSize = '16px';
+                document.body.appendChild(testElement);
+                
+                var computedStyle = window.getComputedStyle(testElement, ':before');
+                var content = computedStyle.getPropertyValue('content');
+                var isLoaded = content && content !== 'none' && content !== '\"\"';
+                
+                document.body.removeChild(testElement);
+                
+                if (!isLoaded) {
+                    console.warn('Font Awesome blocked by tracking protection. Icons may not display correctly.');
+                    // You could load a local backup here or show a message to users
+                } else {
+                    console.log('✓ Font Awesome loaded successfully');
+                }
+            }, 3000);
+        });
+    </script>
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="~/lib/icon/favicon-32x32.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="~/lib/icon/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="~/lib/icon/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="~/lib/icon/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="~/lib/icon/apple-touch-icon-144x144.png">
+
+    @* Jquery *@
+    <script src="~/lib/bootstrap/dist/js/jquery-3.3.1.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/jquery.mousewheel.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/jquery.mCustomScrollbar.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/jquery.morelines.min.js"></script>
+
+    @* css *@
+    <link rel="stylesheet" href="~/css/Notification.css" />
+
+    @* js *@
+    <script src="~/js/Layout.js"></script>
+    @{
+
+    }
+
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="Dmitry Volkov">
+    <title>@ViewData["Title"] - MangaOnline</title>
+</head>
+<body class="body">
+    <!-- header -->
+    <header class="header">
+        <div class="header__wrap">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="header__content">
+                            <!-- header logo -->
+                            <a asp-controller="Home" asp-action="Index" class="header__logo">
+                                <img src="~/lib/img/logo.svg" alt="">
+                            </a>
+                            <!-- end header logo -->
+                            <!-- header nav -->
+                            <ul class="header__nav">
+                                <!-- dropdown -->
+                                <li class="header__nav-item">
+                                    <a href="/" class="header__nav-link">Trang chủ</a>
+                                </li>
+                                <!-- end dropdown -->
+                                <!-- dropdown -->
+                                <li class="header__nav-item">
+                                    <a class="dropdown-toggle header__nav-link" href="#" role="button" id="dropdownMenuCatalog"
+                                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Thể Loại
+                                    </a>
+                                    <ul class="dropdown-menu header__dropdown-menu" aria-labelledby="dropdownMenuCatalog">
+                                        <li>
+                                            <a href="/public/search">Tất cả</a>
+                                        </li>
+                                        @foreach (var category in AllCategory.GetAll)
+                                        {
+                                            <li>
+                                                <a href="/public/search?categoryName=@category.Name">@category.Name</a>
+                                            </li>
+                                        }
+                                    </ul>
+
+                                </li>
+                                <li class="header__nav-item">
+                                    <a id="tab-history" style="display: none" href="/Manager/ReadingHistory?userId=" class="header__nav-link">Lịch sử</a>
+                                    <div id="noti-history" style="display: none">
+                                        <span id="noti-number-history">1</span>
+                                    </div>
+                                </li>
+                                <!-- end dropdown -->
+                                <li class="header__nav-item">
+                                    <a id="tab-follow" style="display: none" href="/Manager/follow?userId=" class="header__nav-link">Theo Dõi</a>
+                                    <div id="noti-follow" style="display: none">
+                                        <span id="noti-number-follow">1</span>
+                    </div>
+                                </li>
+                                <li class="header__nav-item">
+                                    <a id="tab-search" style="display: none" href="/public/search" class="header__nav-link">Tìm truyện</a>
+                                    <div id="noti-search" style="display: none">
+                                        <span id="noti-number-search">1</span>
+                                    </div>
+                                </li>
+                            </ul>
+                            <!-- end header nav -->
+                            <!-- header auth -->
+                            <div class="header__auth">
+                                <button class="header__search-btn" type="button">
+                                    <i class="icon ion-ios-search"></i>
+                                </button>
+                                <a id="btn-login" href="/Auth/AuthLogin" class="header__sign-in" style="display: none">
+                                    <i class="icon ion-ios-log-in"></i>
+                                    <span>Đăng nhập</span>
+                                </a>
+
+                                <li id="btn-user" class="dropdown header__nav-item li-avatar" style="display: none">
+                                    <a class="dropdown-toggle header__nav-link header__nav-link--more" href="#" role="button" id="dropdownMenuMore" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <img id="avatar"
+                                             class="avatar" id="avartar-user" src="/image/manga-image/avatar-default.jpg" 
+                                             onerror="this.src='/image/manga-image/avatar-default.jpg'" />
+                                        <img id="userVIp" style="height: 20px; margin-left: -30px; margin-top:-34px;display: none" src="~/image/crown2.png" />
+                                        <div id="admin-icon" style="    font-size: 14px;
+                                                                    position: absolute;
+                                                                    bottom: -27px;
+                                                                    right: -2px;
+                                                                    text-transform: initial;
+                                                                    color: #f7778e; display: none;">
+                                            Admin
+                                        </div>
+                                    </a>
+                                    <ul class="dropdown-menu header__dropdown-menu" aria-labelledby="dropdownMenuMore">
+                                        <li>
+                                            <a id="profile" href="/profile?id=">Hồ sơ</a>
+                                        </li>
+                                        <li>
+                                            <a asp-area="" asp-controller="Auth" asp-action="AuthChangePassword">Đổi mật khẩu</a>
+                                        </li>
+                                        <li id="pay-history" style="display: none">
+                                            <a href="/auth/historyaccount">Lịch sử giao dịch</a>
+                                        </li>
+                                        <li id="user-levelUp" style="display: none">
+                                            <a href="/Auth/UpdateAccount">Nâng cấp tài khoản</a>
+                                        </li>
+                                        @* <li id="user-manager" style="display: none"> *@
+                                        @*     <a href="/manage/user/list">Quản lý người dùng</a> *@
+                                        @* </li> *@
+                                        <li id="manga-manager" style="display: none">
+                                            <a href="/manager/ListManga">Quản lý Manga</a>
+                                        </li>
+                                        <li id="add-manga-manager" style="display: none">
+                                            <a href="/Manager/AddManga">Thêm Manga</a>
+                                        </li>
+                                        <li onclick="LogOut()">
+                                            <a href="/Auth/AuthLogin">Đăng xuất</a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                            </div>
+                            <!-- end header auth -->
+                            <!-- header menu btn -->
+                            <button class="header__btn" type="button">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </button>
+                            <!-- end header menu btn -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- header search -->
+        <div class="header__search">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="header__search-content">
+                            <input type="text" id="search-input" placeholder="Tên truyện bạn muốn đọc">
+                            <button id="search-button" type="button">Tìm Truyện</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end header search -->
+    </header>
+    <!-- end header -->
+    @* Notification *@
+    <div style="" class="alert alert-warning alert-dismissible fade show alert-noti alert-success" id="alertNotificationSuccess" role="alert">
+        <i class="icon ion-ios-checkmark-circle icon-noti-success"></i>
+        <span class="content-noti" id="contentAlertNotificationSuccess"></span>
+        <button type="button" class="close icon-btn" onclick="CloseNotificationError()">
+            <span aria-hidden="false" onclick="CloseNotificationSuccess()">&times;</span>
+        </button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show alert-noti alert-error" id="alertNotificationError" role="alert">
+        <i class="icon ion-ios-alert icon-noti-error"></i>
+        <span class="content-noti" id="contentAlertNotificationError"></span>
+        <button type="button" class="close icon-btn" onclick="CloseNotificationError()">
+            <span aria-hidden="false">&times;</span>
+        </button>
+    </div>
+
+
+    @RenderBody()
+
+    <!-- Overlay loading -->
+    <div class="overlay" id="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Footer đã được loại bỏ để tối ưu trải nghiệm đọc truyện -->
+    
+    <!-- JS -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/owl.carousel.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/wNumb.js"></script>
+    <script src="~/lib/bootstrap/dist/js/nouislider.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/plyr.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/photoswipe.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/photoswipe-ui-default.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/main.js"></script>
+    <script src="~/js/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/NotiSignalr.js"></script>
+    <script>
+              $(document).ready(function () {
+                 var user = GetUserData();
+                 if (user!==null){
+                     $("#tab-history").show();
+                     var current1 = $("#tab-history").attr('href');
+                     current1 += user.userId
+                     $("#tab-history").attr('href', current1);
+
+                     $("#tab-follow").show();                    
+                     var curent = $("#tab-follow").attr('href');
+                     curent += user.userId
+                     $("#tab-follow").attr('href', curent);
+
+                     $("#tab-search").show();
+                     
+                     var current = $("#profile").attr('href');
+                     current += user.userId;
+                     $("#profile").attr('href', current);
+                     
+                 // Fix avatar URL construction
+                 if(user.avartar != null && user.avartar.trim() !== '') {
+                     $("#avatar").attr('src', '/image/manga-image/' + user.avartar);
+                 } else {
+                     $("#avatar").attr('src', '/image/manga-image/avatar-default.jpg');
+                 }
+                 } else {
+                     $("#btn-login").show();
+                     $("#btn-user").hide();
+                 }
+
+                 $("#search-button").on("click",() => {
+                    var data = $("#search-input").val();
+                    window.location.href = "/public/search?query=" + data;
+                });
+            });
+
+            function GetUserData() {
+                try {
+                    const user = localStorage.getItem("USER_DATA");
+                    return user ? JSON.parse(user) : null;
+                } catch (error) {
+                    console.error("Error parsing user data:", error);
+                    return null;
+                }
+            }
+            
+            // Global variable for API URL
+            window.urlServiceManga = "http://localhost:5098";
+            
+            // Initialize when DOM is ready
+            $(document).ready(function() {
+                console.log('🚀 Initializing global page scroll detection for chapter reading...');
+                
+                // Simple, robust global scroll handler
+                let lastScrollTop = 0;
+                let isHeaderVisible = true;
+                const $header = $('.header');
+                
+                // Ensure header exists
+                if ($header.length === 0) {
+                    console.error('❌ Header not found');
+                    return;
+                }
+                
+                console.log('✅ Header element found');
+                
+                // Make header fixed and visible initially
+                $header.css({
+                    'position': 'fixed',
+                    'top': '0',
+                    'left': '0', 
+                    'right': '0',
+                    'z-index': '999',
+                    'transition': 'transform 0.3s ease, opacity 0.3s ease',
+                    'transform': 'translateY(0)',
+                    'opacity': '1'
+                });
+                
+                // Add body padding to compensate for fixed header
+                $('body').css('padding-top', '93px');
+                
+                function showHeader(reason) {
+                    if (!isHeaderVisible) {
+                        $header.css({
+                            'transform': 'translateY(0)',
+                            'opacity': '1'
+                        });
+                        isHeaderVisible = true;
+                        console.log('📱 Header shown:', reason);
+                    }
+                }
+                
+                function hideHeader(reason) {
+                    if (isHeaderVisible) {
+                        $header.css({
+                            'transform': 'translateY(-100%)', 
+                            'opacity': '0'
+                        });
+                        isHeaderVisible = false;
+                        console.log('📱 Header hidden:', reason);
+                    }
+                }
+                
+                // MAIN SCROLL HANDLER - Binds to WINDOW for entire page
+                $(window).on('scroll', function() {
+                    const currentScroll = $(window).scrollTop();
+                    const scrollDirection = currentScroll > lastScrollTop ? 'down' : 'up';
+                    const scrollDelta = Math.abs(currentScroll - lastScrollTop);
+                    
+                    // Ignore tiny movements
+                    if (scrollDelta < 5) {
+                        return;
+                    }
+                    
+                    console.log(`📊 Chapter page scroll: ${currentScroll}px, direction: ${scrollDirection}`);
+                    
+                    // Show header at top of page
+                    if (currentScroll <= 50) {
+                        showHeader('at top of chapter page');
+                    }
+                    // Hide header when scrolling down
+                    else if (scrollDirection === 'down' && currentScroll > 100) {
+                        hideHeader('scrolling down on chapter');
+                    }
+                    // Show header when scrolling up
+                    else if (scrollDirection === 'up' && currentScroll > 50) {
+                        showHeader('scrolling up on chapter');
+                    }
+                    
+                    lastScrollTop = currentScroll;
+                });
+                
+                // Additional binding for document scroll (backup)
+                $(document).on('scroll', function() {
+                    console.log('📊 Document scroll detected on chapter page');
+                    $(window).trigger('scroll');
+                });
+                
+                console.log('✅ Global chapter page scroll handler attached to WINDOW');
+                console.log('📱 Try scrolling anywhere on the chapter page now!');
+                
+                // Test initial position
+                const initialScroll = $(window).scrollTop();
+                console.log(`📍 Initial scroll position on chapter: ${initialScroll}px`);
+                
+                if (initialScroll > 100) {
+                    hideHeader('initial chapter page position');
+                }
+            });
+    </script>
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

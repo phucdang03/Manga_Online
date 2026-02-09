@@ -48,3 +48,37 @@
     align-items: center;
     padding: 0px 7px 0px 7px;
 }
+
+/* Header scroll animations - Simplified and more reliable */
+.header {
+    /* Remove any conflicting position styles */
+    /* position: fixed will be set by JavaScript */
+    z-index: 999 !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important, 
+                opacity 0.3s ease-in-out !important;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Remove specific header state classes to avoid conflicts */
+.header--hidden {
+    /* Styles will be applied directly via JavaScript */
+}
+
+.header--visible {
+    /* Styles will be applied directly via JavaScript */
+}
+
+/* Body padding to compensate for fixed header - will be set by JavaScript */
+body.body {
+    transition: padding-top 0.3s ease;
+}
+
+/* Mobile responsive header */
+@media (max-width: 768px) {
+    .header {
+        transition: transform 0.2s ease-out !important, 
+                   opacity 0.2s ease-out !important;
+    }
+}

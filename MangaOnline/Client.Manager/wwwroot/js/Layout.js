@@ -23,8 +23,13 @@ $(document).ready(function () {
                 $('#pay-history').show();
                 break;
         }
-        if(user.avartar!==null){
-            $('#avartar-user').attr('src', `/image/avartar-user/${user.avartar}`);
+        if(user.avartar && user.avartar !== null && user.avartar.trim() !== ''){
+            $('#avartar-user').attr('src', `/image/manga-image/${user.avartar}`)
+                .on('error', function() {
+                    $(this).attr('src', '/image/manga-image/avatar-default.jpg');
+                });
+        } else {
+            $('#avartar-user').attr('src', '/image/manga-image/avatar-default.jpg');
         }
     }else {
         $('#btn-login').show();

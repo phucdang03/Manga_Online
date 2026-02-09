@@ -23,9 +23,39 @@
     <link rel="stylesheet" href="~/css/_Layout.css" />
     <link rel="stylesheet" href="~/css/Loading.css" />
     <!-- Font-Awesome icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
-          integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome CDN with tracking protection bypass -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" 
+          integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+    
+    <!-- Fallback for tracking protection issues -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if FontAwesome loaded after 3 seconds
+            setTimeout(function() {
+                var testElement = document.createElement('i');
+                testElement.className = 'fas fa-home';
+                testElement.style.position = 'absolute';
+                testElement.style.left = '-9999px';
+                testElement.style.fontSize = '16px';
+                document.body.appendChild(testElement);
+                
+                var computedStyle = window.getComputedStyle(testElement, ':before');
+                var content = computedStyle.getPropertyValue('content');
+                var isLoaded = content && content !== 'none' && content !== '\"\"';
+                
+                document.body.removeChild(testElement);
+                
+                if (!isLoaded) {
+                    console.warn('Font Awesome blocked by tracking protection. Icons may not display correctly.');
+                    // You could load a local backup here or show a message to users
+                } else {
+                    console.log('✓ Font Awesome loaded successfully');
+                }
+            }, 3000);
+        });
+    </script>
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="~/lib/icon/favicon-32x32.png" sizes="32x32">
@@ -127,7 +157,8 @@
                                 <li id="btn-user" class="dropdown header__nav-item li-avatar" style="display: none">
                                     <a class="dropdown-toggle header__nav-link header__nav-link--more" href="#" role="button" id="dropdownMenuMore" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <img id="avatar"
-                                             class="avatar" id="avartar-user" src="/image/manga-image/" />
+                                             class="avatar" id="avartar-user" src="/image/manga-image/avatar-default.jpg" 
+                                             onerror="this.src='/image/manga-image/avatar-default.jpg'" />
                                         <img id="userVIp" style="height: 20px; margin-left: -30px; margin-top:-34px;display: none" src="~/image/crown2.png" />
                                         <div id="admin-icon" style="    font-size: 14px;
                                                                     position: absolute;
@@ -362,13 +393,12 @@
                      current += user.userId;
                      $("#profile").attr('href', current);
                      
-                     current = $("#avatar").attr('src');
-                     if(user.avartar != null)
-                        current += user.avartar;
-                     else {
-                         current += "avatar-default.jpg"
+                     // Fix avatar URL construction  
+                     if(user.avartar != null && user.avartar.trim() !== '') {
+                         $("#avatar").attr('src', '/image/manga-image/' + user.avartar);
+                     } else {
+                         $("#avatar").attr('src', '/image/manga-image/avatar-default.jpg');
                      }
-                     $("#avatar").attr('src', current);
                      
                      $("#btn-user").show();
                      $("#btn-login").hide();
@@ -395,6 +425,114 @@
             
             // Global variable for API URL
             window.urlServiceManga = "http://localhost:5098";
+            
+            // Initialize when DOM is ready
+            $(document).ready(function() {
+                console.log('🚀 Initializing global page scroll detection...');
+                
+                // Simple, robust global scroll handler
+                let lastScrollTop = 0;
+                let isHeaderVisible = true;
+                const $header = $('.header');
+                
+                // Ensure header exists
+                if ($header.length === 0) {
+                    console.error('❌ Header not found');
+                    return;
+                }
+                
+                console.log('✅ Header element found');
+                
+                // Make header fixed and visible initially
+                $header.css({
+                    'position': 'fixed',
+                    'top': '0',
+                    'left': '0', 
+                    'right': '0',
+                    'z-index': '999',
+                    'transition': 'transform 0.3s ease, opacity 0.3s ease',
+                    'transform': 'translateY(0)',
+                    'opacity': '1'
+                });
+                
+                // Add body padding to compensate for fixed header
+                $('body').css('padding-top', '93px');
+                
+                function showHeader(reason) {
+                    if (!isHeaderVisible) {
+                        $header.css({
+                            'transform': 'translateY(0)',
+                            'opacity': '1'
+                        });
+                        isHeaderVisible = true;
+                        console.log('📱 Header shown:', reason);
+                    }
+                }
+                
+                function hideHeader(reason) {
+                    if (isHeaderVisible) {
+                        $header.css({
+                            'transform': 'translateY(-100%)', 
+                            'opacity': '0'
+                        });
+                        isHeaderVisible = false;
+                        console.log('📱 Header hidden:', reason);
+                    }
+                }
+                
+                // MAIN SCROLL HANDLER - Binds to WINDOW for entire page
+                $(window).on('scroll', function() {
+                    const currentScroll = $(window).scrollTop();
+                    const scrollDirection = currentScroll > lastScrollTop ? 'down' : 'up';
+                    const scrollDelta = Math.abs(currentScroll - lastScrollTop);
+                    
+                    // Ignore tiny movements
+                    if (scrollDelta < 5) {
+                        return;
+                    }
+                    
+                    console.log(`📊 Page scroll: ${currentScroll}px, direction: ${scrollDirection}`);
+                    
+                    // Show header at top of page
+                    if (currentScroll <= 50) {
+                        showHeader('at top of page');
+                    }
+                    // Hide header when scrolling down
+                    else if (scrollDirection === 'down' && currentScroll > 100) {
+                        hideHeader('scrolling down on page');
+                    }
+                    // Show header when scrolling up
+                    else if (scrollDirection === 'up' && currentScroll > 50) {
+                        showHeader('scrolling up on page');
+                    }
+                    
+                    lastScrollTop = currentScroll;
+                });
+                
+                // Additional binding for document scroll (backup)
+                $(document).on('scroll', function() {
+                    console.log('📊 Document scroll detected');
+                    $(window).trigger('scroll');
+                });
+                
+                console.log('✅ Global page scroll handler attached to WINDOW');
+                console.log('📱 Try scrolling anywhere on the page now!');
+                
+                // Test initial position
+                const initialScroll = $(window).scrollTop();
+                console.log(`📍 Initial scroll position: ${initialScroll}px`);
+                
+                if (initialScroll > 100) {
+                    hideHeader('initial page position');
+                }
+                
+                // Debug: Trigger test scroll after 3 seconds
+                setTimeout(() => {
+                    console.log('🧪 Testing scroll detection...');
+                    const testScroll = $(window).scrollTop();
+                    console.log(`🧪 Current scroll for test: ${testScroll}px`);
+                }, 3000);
+            });
     </script>
 
 

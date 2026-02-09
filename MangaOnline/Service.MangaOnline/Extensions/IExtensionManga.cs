@@ -12,4 +12,8 @@ public interface IExtensionManga
     string UpdateImage(IFormFile myFile,string oldFile);
     
     string UpdateImageAvatarUser(IFormFile myFile,string? oldFile);
+    
+    string CreateImageAvatarUser(IFormFile myFile);
+    
+    string GetPathService(string nameService);
 }

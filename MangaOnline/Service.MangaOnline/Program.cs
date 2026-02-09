@@ -9,7 +9,13 @@ using Service.MangaOnline.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
 
 builder.Services.AddControllers();
 
@@ -49,10 +55,11 @@ if (app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseCors(builder => builder
-    .WithOrigins("http://localhost:5030") // Địa chỉ nguồn gốc mà bạn muốn cho phép truy cập (có thể thêm nhiều địa chỉ khác nhau)
+    .WithOrigins("http://localhost:5030", "https://localhost:5031") // Support both HTTP and HTTPS
     .AllowAnyHeader()
     .AllowAnyMethod()
-    .AllowCredentials());
+    .AllowCredentials()
+    .SetIsOriginAllowed(origin => true)); // Allow SignalR negotiation
 
 app.UseHttpsRedirection();
 

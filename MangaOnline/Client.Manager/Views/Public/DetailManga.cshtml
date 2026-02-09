@@ -121,6 +121,7 @@
             					<th>Số chương</th>
             					<th>Tên</th>
             					<th>Cập nhật</th>
+            					<th id="admin-actions-header" style="display: none">Thao tác</th>
             				</tr>
             			</thead>
 			            <tbody>
@@ -128,7 +129,7 @@
 			            {
 				            foreach (var chapter in manga.Chapteres)
 				            {
-					            <tr>
+					            <tr id="chapter-row-@chapter.Id">
 						            <th>@chapter.ChapterNumber</th>
 						            @if (chapter.Status==(int)ChapterEnum.Normal)
 						            {
@@ -149,8 +150,20 @@
 							            </td>
 						            }
 						            <td>@chapter.CreatedAt.ToString("dd/MM/yy")</td>
+						            <td class="admin-actions-cell" style="display: none">
+							            <button class="btn-delete-chapter" 
+							                    data-chapter-id="@chapter.Id" 
+							                    data-chapter-number="@chapter.ChapterNumber"
+							                    data-chapter-name="@chapter.Name"
+							                    data-manga-id="@manga.Id"
+							                    style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;"
+							                    title="Xóa chapter @chapter.ChapterNumber">
+								            🗑️ Xóa
+							            </button>
+						            </td>
 					            </tr>
 				            }
+			            }
 			            }
 			            </tbody>
             		</table>
@@ -369,6 +382,130 @@
 				});	
 		}
 	 }
+	 
+	 // Delete chapter functionality
+	 const deleteChapter = (chapterId, chapterNumber, chapterName, mangaId) => {
+		 console.log('=== DELETE CHAPTER REQUEST ===');
+		 console.log('Chapter ID:', chapterId);
+		 console.log('Chapter Number:', chapterNumber);
+		 console.log('Chapter Name:', chapterName);
+		 console.log('Manga ID:', mangaId);
+		 
+		 // Show confirmation dialog
+		 if (!confirm(`Bạn có chắc chắn muốn xóa Chapter ${chapterNumber} - "${chapterName}"?\n\nHành động này không thể hoàn tác!`)) {
+			 console.log('User cancelled delete operation');
+			 return;
+		 }
+		 
+		 // Show loading state
+		 const deleteBtn = $(`.btn-delete-chapter[data-chapter-id="${chapterId}"]`);
+		 const originalText = deleteBtn.html();
+		 deleteBtn.prop('disabled', true).html('🔄 Đang xóa...');
+		 
+		 // Make delete request
+		 $.ajax({
+			 url: `/Manager/DeleteChapter?chapterId=${chapterId}&mangaId=${mangaId}`,
+			 type: 'DELETE',
+			 timeout: 30000,
+			 success: function(result) {
+				 console.log('✅ Delete chapter response:', result);
+				 
+				 if (result.success) {
+					 // Remove row from table with animation
+					 $(`#chapter-row-${chapterId}`).fadeOut(500, function() {
+						 $(this).remove();
+						 
+						 // Check if no chapters left
+						 const remainingChapters = $('[id^="chapter-row-"]').length;
+						 if (remainingChapters === 0) {
+							 $('tbody').append(`
+								 <tr>
+									 <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+										 Chưa có chapter nào. <a href="/Manager/ViewAddChapter?id=${mangaId}" style="color: #007bff;">Thêm chapter đầu tiên</a>
+									 </td>
+								 </tr>
+							 `);
+						 }
+					 });
+					 
+					 // Show success message
+					 ShowNotificationSuccess(result.message || `Đã xóa Chapter ${chapterNumber} thành công`);
+					 
+					 console.log('✅ Chapter deleted successfully from UI');
+				 } else {
+					 // Show error message
+					 console.error('❌ Delete failed:', result.message);
+					 ShowNotificationError(result.message || 'Xóa chapter thất bại');
+					 
+					 // Restore button state
+					 deleteBtn.prop('disabled', false).html(originalText);
+				 }
+			 },
+			 error: function(xhr, status, error) {
+				 console.error('💥 Delete chapter AJAX error:', { xhr, status, error });
+				 console.error('Response text:', xhr.responseText);
+				 
+				 let errorMessage = 'Lỗi khi xóa chapter';
+				 
+				 if (xhr.status === 0) {
+					 errorMessage = 'Không thể kết nối tới server';
+				 } else if (xhr.status === 404) {
+					 errorMessage = 'Chapter không tồn tại hoặc đã bị xóa';
+				 } else if (xhr.status === 500) {
+					 errorMessage = 'Lỗi server khi xóa chapter';
+				 } else if (status === 'timeout') {
+					 errorMessage = 'Timeout - Server phản hồi quá chậm';
+				 } else {
+					 // Try to parse error response
+					 try {
+						 const response = JSON.parse(xhr.responseText);
+						 if (response.message) {
+							 errorMessage = response.message;
+						 }
+					 } catch (e) {
+						 // Use default error message
+					 }
+				 }
+				 
+				 ShowNotificationError(errorMessage);
+				 
+				 // Restore button state  
+				 deleteBtn.prop('disabled', false).html(originalText);
+			 }
+		 });
+	 }
+	 
+	 // Initialize delete chapter event handlers
+	 $(document).ready(function() {
+		 // Show admin actions for admin users
+		 if (GetUserData() != null) {
+			 const role = GetUserData().role;
+			 if (role === 'Admin') {
+				 $('#admin-actions-header').show();
+				 $('.admin-actions-cell').show();
+				 $('#add-chapter').show();
+			 }
+		 }
+		 
+		 // Bind delete chapter button events
+		 $(document).on('click', '.btn-delete-chapter', function() {
+			 const chapterId = $(this).data('chapter-id');
+			 const chapterNumber = $(this).data('chapter-number');
+			 const chapterName = $(this).data('chapter-name');
+			 const mangaId = $(this).data('manga-id');
+			 
+			 deleteChapter(chapterId, chapterNumber, chapterName, mangaId);
+		 });
+		 
+		 // Add hover effect for delete buttons
+		 $(document).on('mouseenter', '.btn-delete-chapter', function() {
+			 $(this).css('background', '#c82333');
+		 }).on('mouseleave', '.btn-delete-chapter', function() {
+			 if (!$(this).prop('disabled')) {
+				 $(this).css('background', '#dc3545'); 
+			 }
+		 });
+	 });
 	
 </script>
 <script src="~/js/Notification.js"></script>

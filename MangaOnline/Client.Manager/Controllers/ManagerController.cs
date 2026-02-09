@@ -80,6 +80,129 @@ public class ManagerController : Controller
         return Redirect("follow?userId="+userId);
     }
 
+    public async Task<IActionResult> DeleteChapter(Guid chapterId, Guid? mangaId = null)
+    {
+        try
+        {
+            _logger.LogInformation($"=== DELETE CHAPTER REQUEST === ChapterID: {chapterId}, MangaID: {mangaId}");
+            
+            // Call the delete API
+            var deleteUrl = ServiceMangaUrl + $"Manga/DeleteChapter?chapterId={chapterId}";
+            _logger.LogInformation($"Calling delete API: {deleteUrl}");
+            
+            HttpResponseMessage response = await client.DeleteAsync(deleteUrl);
+            string responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Delete API response: {response.StatusCode} - {responseBody}");
+            
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var deleteResult = JsonSerializer.Deserialize<JsonElement>(responseBody, options);
+                
+                if (deleteResult.TryGetProperty("success", out var successProp) && successProp.GetBoolean())
+                {
+                    string successMessage = "Xóa chapter thành công";
+                    if (deleteResult.TryGetProperty("message", out var msgProp))
+                    {
+                        successMessage = msgProp.GetString() ?? successMessage;
+                    }
+                    
+                    _logger.LogInformation($"✓ Chapter {chapterId} deleted successfully");
+                    
+                    // Set success message for next page
+                    TempData["SuccessMessage"] = successMessage;
+                    
+                    return Json(new { 
+                        success = true, 
+                        message = successMessage,
+                        chapterId = chapterId,
+                        data = deleteResult.GetProperty("deletedChapter")
+                    });
+                }
+                else 
+                {
+                    string errorMessage = "Xóa chapter thất bại";
+                    if (deleteResult.TryGetProperty("message", out var msgProp))
+                    {
+                        errorMessage = msgProp.GetString() ?? errorMessage;
+                    }
+                    
+                    _logger.LogError($"Delete API returned success=false: {errorMessage}");
+                    TempData["ErrorMessage"] = errorMessage;
+                    
+                    return Json(new { 
+                        success = false, 
+                        message = errorMessage 
+                    });
+                }
+            }
+            else
+            {
+                string errorMessage = $"Lỗi server khi xóa chapter: {response.StatusCode}";
+                
+                // Try to parse error message from API
+                try
+                {
+                    var errorResult = JsonSerializer.Deserialize<JsonElement>(responseBody, options);
+                    if (errorResult.TryGetProperty("message", out var msgProp))
+                    {
+                        errorMessage = msgProp.GetString() ?? errorMessage;
+                    }
+                }
+                catch
+                {
+                    // Use default error message if parsing fails
+                }
+                
+                _logger.LogError($"Delete API failed: {response.StatusCode} - {responseBody}");
+                TempData["ErrorMessage"] = errorMessage;
+                
+                return Json(new { 
+                    success = false, 
+                    message = errorMessage,
+                    statusCode = (int)response.StatusCode
+                });
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            var errorMsg = "Không thể kết nối tới server. Kiểm tra Service.MangaOnline có đang chạy không?";
+            _logger.LogError(ex, $"Network error deleting chapter {chapterId}");
+            TempData["ErrorMessage"] = errorMsg;
+            
+            return Json(new { 
+                success = false, 
+                message = errorMsg,
+                error = "NetworkError"
+            });
+        }
+        catch (TaskCanceledException ex)
+        {
+            var errorMsg = "Timeout khi xóa chapter. Server phản hồi quá chậm.";
+            _logger.LogError(ex, $"Timeout deleting chapter {chapterId}");
+            TempData["ErrorMessage"] = errorMsg;
+            
+            return Json(new { 
+                success = false, 
+                message = errorMsg,
+                error = "Timeout"  
+            });
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Lỗi không xác định khi xóa chapter: {ex.Message}";
+            _logger.LogError(ex, $"Unexpected error deleting chapter {chapterId}");
+            TempData["ErrorMessage"] = errorMsg;
+            
+            return Json(new { 
+                success = false, 
+                message = errorMsg,
+                error = "UnexpectedError"
+            });
+        }
+    }
+
     public async Task<IActionResult> ViewAddChapter(Guid id)
     {
         var response = await client.GetAsync(ServiceMangaUrl + "manga/GetManga?id="+ id);
@@ -91,35 +214,166 @@ public class ManagerController : Controller
         return View("AddChapter");
     }
 
+    [HttpPost]
     public async Task<IActionResult> AddChapter()
     {
-        IFormFile file = Request.Form.Files.GetFile("fileUp")!;
-
-        Chaptere chaptere = new Chaptere();
-        chaptere.ChapterNumber = int.Parse(Request.Form["ChapNumber"]);
-        chaptere.Id = Guid.NewGuid();
-        chaptere.SubId = 0;
-        chaptere.MangaId = Guid.Parse(Request.Form["mangaId"]);
-        chaptere.Name = " Chapter "+ Request.Form["ChapNumber"];
-        chaptere.CreatedAt = DateTimeOffset.Now;
-        chaptere.Status = Int32.Parse(Request.Form["Status"]);
-        chaptere.IsActive = true;
-        //chaptere.FilePDF = _logicHandler.CreatePDF(file);
-        
-        string apiEndpoint = "http://localhost:5098/File/CreateImage";
-        var formData = new MultipartFormDataContent();
-        formData.Add(new StreamContent(file.OpenReadStream()), "imageFile", file.FileName);
-        var response = await client.PostAsync(apiEndpoint, formData);
-        if (response.IsSuccessStatusCode)
+        try
         {
-            string responseBody = await response.Content.ReadAsStringAsync();
-            var option = new JsonSerializerOptions
-                { PropertyNameCaseInsensitive = true };
-            var data = JsonSerializer.Deserialize<DataResponse>(responseBody, option);
-            chaptere.FilePdf = data!.data;
+            // Validate Chapter Number
+            if (!int.TryParse(Request.Form["ChapNumber"], out int chapterNumber) || chapterNumber <= 0)
+            {
+                TempData["ErrorMessage"] = "Số chapter phải là số nguyên dương.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Validate Status
+            if (!int.TryParse(Request.Form["Status"], out int status))
+            {
+                TempData["ErrorMessage"] = "Trạng thái chapter không hợp lệ.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Validate Manga ID
+            if (!Guid.TryParse(Request.Form["mangaId"], out Guid mangaId))
+            {
+                TempData["ErrorMessage"] = "ID manga không hợp lệ.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Check if chapter number already exists for this manga
+            _logger.LogInformation($"Checking if chapter {chapterNumber} already exists for manga {mangaId}");
+            try
+            {
+                var checkChapterUrl = ServiceMangaUrl + $"manga/CheckChapterExists?mangaId={mangaId}&chapterNumber={chapterNumber}";
+                var checkResponse = await client.GetAsync(checkChapterUrl);
+                
+                if (checkResponse.IsSuccessStatusCode)
+                {
+                    string checkResponseBody = await checkResponse.Content.ReadAsStringAsync();
+                    var checkOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var checkResult = JsonSerializer.Deserialize<JsonElement>(checkResponseBody, checkOptions);
+                    
+                    if (checkResult.TryGetProperty("exists", out var existsProperty) && existsProperty.GetBoolean())
+                    {
+                        _logger.LogWarning($"Chapter {chapterNumber} already exists for manga {mangaId}");
+                        TempData["ErrorMessage"] = $"Chapter {chapterNumber} đã tồn tại cho manga này. Vui lòng chọn số chapter khác.";
+                        return await ReturnToAddChapterView();
+                    }
+                    
+                    _logger.LogInformation($"✓ Chapter {chapterNumber} is available for manga {mangaId}");
+                }
+                else
+                {
+                    // If the API doesn't exist yet, try alternative method - get all chapters and check manually
+                    _logger.LogInformation("CheckChapterExists API not available, using fallback method");
+                    var getMangaUrl = ServiceMangaUrl + $"manga/GetManga?id={mangaId}";
+                    var getMangaResponse = await client.GetAsync(getMangaUrl);
+                    
+                    if (getMangaResponse.IsSuccessStatusCode)
+                    {
+                        string getMangaResponseBody = await getMangaResponse.Content.ReadAsStringAsync();
+                        var getMangaOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var mangaResult = JsonSerializer.Deserialize<JsonElement>(getMangaResponseBody, getMangaOptions);
+                        
+                        if (mangaResult.TryGetProperty("data", out var mangaData) &&
+                            mangaData.TryGetProperty("chapteres", out var chapters))
+                        {
+                            foreach (var chapter in chapters.EnumerateArray())
+                            {
+                                if (chapter.TryGetProperty("chapterNumber", out var chapterNum) && 
+                                    chapterNum.GetInt32() == chapterNumber)
+                                {
+                                    _logger.LogWarning($"Chapter {chapterNumber} already exists for manga {mangaId} (found via fallback)");
+                                    TempData["ErrorMessage"] = $"Chapter {chapterNumber} đã tồn tại cho manga này. Vui lòng chọn số chapter khác.";
+                                    return await ReturnToAddChapterView();
+                                }
+                            }
+                            _logger.LogInformation($"✓ Chapter {chapterNumber} is available for manga {mangaId} (verified via fallback)");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error checking chapter existence for manga {mangaId}, chapter {chapterNumber}");
+                // Continue without blocking - this is a validation enhancement, not critical
+                _logger.LogWarning("Continuing with chapter creation despite validation check failure");
+            }
+
+            // Validate File Upload
+            IFormFile file = Request.Form.Files.GetFile("fileUp");
+            if (file == null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn file để upload.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Validate file type
+            var allowedExtensions = new[] { ".pdf", ".png", ".jpg", ".jpeg" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                TempData["ErrorMessage"] = "Chỉ chấp nhận file PDF, PNG, JPG, JPEG.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Validate file size (max 50MB)
+            if (file.Length > 50 * 1024 * 1024)
+            {
+                TempData["ErrorMessage"] = "File không được vượt quá 50MB.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Create Chapter object
+            Chaptere chaptere = new Chaptere
+            {
+                Id = Guid.NewGuid(),
+                ChapterNumber = chapterNumber,
+                SubId = 0,
+                MangaId = mangaId,
+                Name = $"Chapter {chapterNumber}",
+                CreatedAt = DateTimeOffset.Now,
+                Status = status,
+                IsActive = true
+            };
+
+            // Upload file to service
+            _logger.LogInformation($"Uploading file for chapter {chapterNumber} of manga {mangaId}");
             
-            string apiC = "http://localhost:5098/Manga/AddChapter";
-            var formContent = new FormUrlEncodedContent(new[] {
+            string apiEndpoint = ServiceMangaUrl + "File/CreateImage";
+            using var formData = new MultipartFormDataContent();
+            using var fileStream = file.OpenReadStream();
+            formData.Add(new StreamContent(fileStream), "imageFile", file.FileName);
+            
+            var uploadResponse = await client.PostAsync(apiEndpoint, formData);
+            
+            if (!uploadResponse.IsSuccessStatusCode)
+            {
+                string errorContent = await uploadResponse.Content.ReadAsStringAsync();
+                _logger.LogError($"File upload failed: {uploadResponse.StatusCode} - {errorContent}");
+                TempData["ErrorMessage"] = "Upload file thất bại. Vui lòng thử lại.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Parse upload response
+            string uploadResponseBody = await uploadResponse.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var uploadData = JsonSerializer.Deserialize<DataResponse>(uploadResponseBody, options);
+            
+            if (uploadData?.data == null)
+            {
+                _logger.LogError("Upload response data is null");
+                TempData["ErrorMessage"] = "Upload file thất bại. Vui lòng thử lại.";
+                return await ReturnToAddChapterView();
+            }
+
+            chaptere.FilePdf = uploadData.data;
+
+            // Add chapter to database
+            _logger.LogInformation($"Adding chapter {chapterNumber} to database");
+            
+            string addChapterApi = ServiceMangaUrl + "Manga/AddChapter";
+            var chapterFormContent = new FormUrlEncodedContent(new[] {
                 new KeyValuePair<string,string>("ChapterNumber", chaptere.ChapterNumber.ToString()),
                 new KeyValuePair<string,string>("SubId", chaptere.SubId.ToString()),
                 new KeyValuePair<string,string>("MangaId", chaptere.MangaId.ToString()),
@@ -128,11 +382,36 @@ public class ManagerController : Controller
                 new KeyValuePair<string,string>("IsActive", chaptere.IsActive.ToString()),
                 new KeyValuePair<string,string>("FilePDF", chaptere.FilePdf)
             });
-            var responseC = await client.PostAsync(apiC, formContent);
-            if (responseC.IsSuccessStatusCode)
+
+            var addChapterResponse = await client.PostAsync(addChapterApi, chapterFormContent);
+            
+            if (!addChapterResponse.IsSuccessStatusCode)
             {
-                return Redirect("/Public/DetailManga?id="+Request.Form["mangaId"]); 
-            } 
+                string errorContent = await addChapterResponse.Content.ReadAsStringAsync();
+                _logger.LogError($"Add chapter failed: {addChapterResponse.StatusCode} - {errorContent}");
+                TempData["ErrorMessage"] = "Thêm chapter thất bại. Vui lòng thử lại.";
+                return await ReturnToAddChapterView();
+            }
+
+            // Success
+            _logger.LogInformation($"Successfully added chapter {chapterNumber} for manga {mangaId}");
+            TempData["SuccessMessage"] = $"Thêm chapter {chapterNumber} thành công!";
+            
+            return Redirect($"/Public/DetailManga?id={mangaId}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while adding chapter");
+            TempData["ErrorMessage"] = "Có lỗi xảy ra. Vui lòng thử lại.";
+            return await ReturnToAddChapterView();
+        }
+    }
+
+    private async Task<IActionResult> ReturnToAddChapterView()
+    {
+        if (Guid.TryParse(Request.Form["mangaId"], out Guid mangaId))
+        {
+            return await ViewAddChapter(mangaId);
         }
         return View("Error");
     }

@@ -65,18 +65,39 @@ public class ExtensionManga : IExtensionManga
         {
             throw new Exception("File not found or empty.");
         }
-        //add img
+        
         var newFileName = Guid.NewGuid();
-        var extension = Path.GetExtension(myFile.FileName);
+        var extension = Path.GetExtension(myFile.FileName).ToLower();
         string fileName = newFileName + extension;
 
-        var folderPath = "image/manga-image";
-        if (myFile.FileName.Contains(".pdf"))
+        // Determine folder path based on file type
+        string folderPath;
+        var imageExtensions = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp" };
+        var documentExtensions = new[] { ".pdf" };
+        
+        if (imageExtensions.Contains(extension))
+        {
+            folderPath = "image/manga-image";
+        }
+        else if (documentExtensions.Contains(extension))
         {
             folderPath = "pdf";
         }
+        else
+        {
+            throw new Exception($"Unsupported file type: {extension}");
+        }
+
         string filePath = Path.Combine(GetPathService("Client.Manager"),
             "wwwroot", folderPath, fileName);
+            
+        // Create directory if it doesn't exist
+        var directory = Path.GetDirectoryName(filePath);
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        
         using (var file = new FileStream(filePath, FileMode.Create))
         {
             myFile.CopyTo(file);

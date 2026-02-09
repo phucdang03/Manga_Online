@@ -41,7 +41,7 @@ public class MangaController : ODataController
         var res = _context.Mangas
              .Include(x => x.CategoryMangas)
              .ThenInclude(x => x.Category)
-             .Include(x => x.Chapteres)
+             .Include(x => x.Chapteres.Where(c => c.IsActive == true))
              .Include(x => x.Author)
              .Where(x=> x.IsActive == true)
              .ToList();
@@ -64,7 +64,7 @@ public class MangaController : ODataController
             var mangas = _context.Mangas
                 .Include(x => x.CategoryMangas)
                 .ThenInclude(x => x.Category)
-                .Include(x => x.Chapteres)
+                .Include(x => x.Chapteres.Where(c => c.IsActive == true))
                 .Include(x => x.Author)
                 .Where(x => x.IsActive == true)
                 .AsQueryable();
@@ -266,7 +266,7 @@ public class MangaController : ODataController
         var topMonthManga = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Where(x => x.ModifiedAt!.Value.Month == DateTime.Now.Month
                         && x.ModifiedAt!.Value.Year == DateTime.Now.Year && x.IsActive == true)
@@ -276,7 +276,7 @@ public class MangaController : ODataController
             topMonthManga = _context.Mangas
                 .Include(x => x.CategoryMangas)
                 .ThenInclude(x => x.Category)
-                .Include(x => x.Chapteres)
+                .Include(x => x.Chapteres.Where(c => c.IsActive == true))
                 .Include(x => x.Author)
                 .Where(x => x.ModifiedAt!.Value.Year == DateTime.Now.Year && x.IsActive == true)
                 .OrderByDescending(x => x.Star).Skip(0).Take(8).ToList();
@@ -285,21 +285,21 @@ public class MangaController : ODataController
         var newUpdateMangas = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Where(x=> x.IsActive == true)
             .OrderByDescending(x => x.ModifiedAt).Skip(0).Take(12).ToList();
         var newDoneMangas = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Where(x => x.Status == (int)MangaStatus.Done && x.IsActive == true)
             .OrderByDescending(x => x.ModifiedAt).Skip(0).Take(12).ToList();
         var topViewMangas = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Where(x=> x.IsActive == true)
             .OrderByDescending(x => x.ViewCount).Skip(0).Take(6).ToList();
@@ -434,7 +434,7 @@ public class MangaController : ODataController
             .Include(x => x.Author)
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true)) // Only include active chapters
             .FirstOrDefaultAsync(x => x.Id == id);
         if (manga != null)
         {
@@ -464,7 +464,7 @@ public class MangaController : ODataController
         var list = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Where(x => mangaIds.Contains(x.Id))
             .ToList()
@@ -544,7 +544,7 @@ public class MangaController : ODataController
         var list = _context.Mangas
             .Include(x => x.CategoryMangas)
             .ThenInclude(x => x.Category)
-            .Include(x => x.Chapteres)
+            .Include(x => x.Chapteres.Where(c => c.IsActive == true))
             .Include(x => x.Author)
             .Include(x => x.FollowLists)
             .Where(x => x.FollowLists.FirstOrDefault(y => y.UserId == userId) != null).ToList();
@@ -648,7 +648,7 @@ public class MangaController : ODataController
     public IActionResult GetChapter(Guid id,string ipAddress)
     {
         var chapter = _context.Chapteres
-            .FirstOrDefault(x => x.Id == id);
+            .FirstOrDefault(x => x.Id == id && x.IsActive == true);
         
         if (chapter != null)
         {
@@ -935,7 +935,7 @@ public class MangaController : ODataController
         
         var chapter = _context.Chapteres
             .Include(x => x.Manga)
-            .FirstOrDefault(x => x.Id == id);
+            .FirstOrDefault(x => x.Id == id && x.IsActive == true);
         
         if (chapter != null)
         {
@@ -964,5 +964,218 @@ public class MangaController : ODataController
             success = false, 
             message = "Chapter not found" 
         });
+    }
+    
+    [HttpGet("CheckChapterExists")]
+    public IActionResult CheckChapterExists(Guid mangaId, int chapterNumber)
+    {
+        Console.WriteLine($"=== CHECK CHAPTER EXISTS DEBUG ===");
+        Console.WriteLine($"Manga ID: {mangaId}");
+        Console.WriteLine($"Chapter Number: {chapterNumber}");
+        
+        try
+        {
+            // Check if manga exists
+            var manga = _context.Mangas.FirstOrDefault(x => x.Id == mangaId && x.IsActive == true);
+            if (manga == null)
+            {
+                Console.WriteLine($"Manga not found: {mangaId}");
+                return NotFound(new 
+                { 
+                    status = 404, 
+                    success = false, 
+                    message = "Manga not found",
+                    exists = false
+                });
+            }
+            
+// Check if chapter with this number already exists (only active chapters)
+            var existingChapter = _context.Chapteres
+                .FirstOrDefault(x => x.MangaId == mangaId && 
+                                   x.ChapterNumber == chapterNumber && 
+                                   x.IsActive == true);
+                                   
+            bool exists = existingChapter != null;
+            
+            Console.WriteLine($"Chapter {chapterNumber} exists for manga {mangaId}: {exists}");
+            if (exists)
+            {
+                Console.WriteLine($"Existing chapter details - ID: {existingChapter.Id}, Name: {existingChapter.Name}, Created: {existingChapter.CreatedAt}");
+            }
+            
+            return Ok(new 
+            { 
+                status = 200, 
+                success = true, 
+                exists = exists,
+                mangaId = mangaId,
+                chapterNumber = chapterNumber,
+                message = exists ? 
+                    $"Chapter {chapterNumber} đã tồn tại cho manga này" : 
+                    $"Chapter {chapterNumber} có thể sử dụng",
+                existingChapter = exists ? new 
+                {
+                    id = existingChapter.Id,
+                    name = existingChapter.Name,
+                    createdAt = existingChapter.CreatedAt
+                } : null
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking chapter existence: {ex.Message}");
+            return StatusCode(500, new 
+            { 
+                status = 500, 
+                success = false, 
+                message = "Internal server error while checking chapter existence",
+                error = ex.Message,
+                exists = false
+            });
+        }
+    }
+    
+    [HttpDelete("DeleteChapter")]
+    public async Task<IActionResult> DeleteChapter(Guid chapterId)
+    {
+        Console.WriteLine($"=== DELETE CHAPTER DEBUG ===");
+        Console.WriteLine($"Chapter ID to delete: {chapterId}");
+        
+        try
+        {
+            // Find the chapter
+            var chapter = await _context.Chapteres
+                .Include(x => x.Manga)
+                .FirstOrDefaultAsync(x => x.Id == chapterId);
+                
+            if (chapter == null)
+            {
+                Console.WriteLine($"Chapter not found: {chapterId}");
+                return NotFound(new 
+                { 
+                    status = 404, 
+                    success = false, 
+                    message = "Chapter không tồn tại hoặc đã bị xóa"
+                });
+            }
+            
+            Console.WriteLine($"Found chapter to delete: {chapter.Name} (Chapter {chapter.ChapterNumber}) of manga {chapter.Manga?.Name}");
+            
+            // Store info for logging before deletion
+            var chapterInfo = new 
+            {
+                Id = chapter.Id,
+                Name = chapter.Name,
+                ChapterNumber = chapter.ChapterNumber,
+                MangaId = chapter.MangaId,
+                MangaName = chapter.Manga?.Name,
+                FilePdf = chapter.FilePdf,
+                CreatedAt = chapter.CreatedAt
+            };
+            
+            // Check if there are any related data that need to be cleaned up
+            Console.WriteLine("Checking related data...");
+            
+            // Check for comments related to the manga (since comments are linked to manga, not chapter)
+            var relatedComments = await _context.Comments
+                .Where(x => x.MangaId == chapter.MangaId)
+                .CountAsync();
+                
+            // Check for reading history related to the manga
+            var relatedReadingHistory = await _context.ReadingHistories
+                .Where(x => x.MangaId == chapter.MangaId)
+                .CountAsync();
+                
+            // Check for notifications related to this chapter
+            var relatedNotifications = await _context.Notifications
+                .Where(x => x.ChapterId == chapterId)
+                .CountAsync();
+                
+            // Check for pages related to this chapter
+            var relatedPages = await _context.Pages
+                .Where(x => x.ChapterId == chapterId)
+                .CountAsync();
+                
+            Console.WriteLine($"Related data - Comments (manga): {relatedComments}, ReadingHistory (manga): {relatedReadingHistory}, Notifications (chapter): {relatedNotifications}, Pages (chapter): {relatedPages}");
+            
+            // Soft delete the chapter (set IsActive = false)
+            chapter.IsActive = false;
+            // Note: Chaptere model doesn't have UpdatedAt property
+            
+            // Delete related notifications for this specific chapter
+            if (relatedNotifications > 0)
+            {
+                var notifications = await _context.Notifications
+                    .Where(x => x.ChapterId == chapterId)
+                    .ToListAsync();
+                _context.Notifications.RemoveRange(notifications);
+                Console.WriteLine($"Removed {notifications.Count} related notifications");
+            }
+            
+            // Delete related pages for this specific chapter
+            if (relatedPages > 0)  
+            {
+                var pages = await _context.Pages
+                    .Where(x => x.ChapterId == chapterId)
+                    .ToListAsync();
+                _context.Pages.RemoveRange(pages);
+                Console.WriteLine($"Removed {pages.Count} related pages");
+            }
+            
+            // Note: We don't delete comments or reading history since they are manga-level, not chapter-level
+            // Only delete them if this is the last chapter and we want to clean up completely
+            
+            // For hard delete, uncomment this line (but keep related data cleanup above):
+            // _context.Chapteres.Remove(chapter);
+            
+            await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"✓ Chapter successfully deleted (soft delete): {chapterInfo.Name}");
+            
+            // Send notification via SignalR if needed
+            try
+            {
+                await HubContext.Clients.All.SendAsync("ChapterDeleted", new 
+                {
+                    chapterId = chapterId,
+                    mangaId = chapter.MangaId,
+                    chapterNumber = chapter.ChapterNumber.ToString(),
+                    message = $"Chapter {chapter.ChapterNumber} đã được xóa"
+                });
+            }
+            catch (Exception hubEx)
+            {
+                Console.WriteLine($"SignalR notification failed: {hubEx.Message}");
+                // Continue - this is not critical
+            }
+            
+            return Ok(new 
+            { 
+                status = 200, 
+                success = true, 
+                message = $"Đã xóa Chapter {chapterInfo.ChapterNumber} thành công",
+                deletedChapter = chapterInfo,
+                relatedDataCleaned = new 
+                {
+                    notifications = relatedNotifications,
+                    pages = relatedPages,
+                    commentsOnManga = relatedComments,
+                    readingHistoryOnManga = relatedReadingHistory 
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting chapter {chapterId}: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            return StatusCode(500, new 
+            { 
+                status = 500, 
+                success = false, 
+                message = "Lỗi server khi xóa chapter",
+                error = ex.Message
+            });
+        }
     }
 }

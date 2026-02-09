@@ -21,6 +21,20 @@
                         <div class="title-addManga">
                             <h1>Thêm Chapter</h1>
                         </div>
+
+                        @* Success/Error Messages *@
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success" style="color: green; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                                @TempData["SuccessMessage"]
+                            </div>
+                        }
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger" style="color: #721c24; background-color: #f8d7da; border: 1px solid #f5c2c7; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                                @TempData["ErrorMessage"]
+                            </div>
+                        }
                         <div class="col-12" style="display: flex;">
                             <div class="col-sm-4">
                                 <div class="input-group-add">
@@ -29,29 +43,37 @@
                                     <input type="text" name="mangaId" hidden value="@manga.Id" >
                                 </div>
                                 <div class="input-group-add">
-                                    <p class="input-title">Chapter Number</p>
-                                    <input type="number" name="ChapNumber" class="sign__input">
+                                    <p class="input-title">Chapter Number <span style="color: red;">*</span></p>
+                                    <input type="number" name="ChapNumber" class="sign__input" 
+                                           required min="1" max="9999" 
+                                           placeholder="Nhập số chapter (VD: 1, 2, 3...)">
                                 </div>
                             </div>
                             <div class="col-sm-4">
                                 <div class="input-group-add">
-                                    <p class="input-title" required
-                                    >UpLoad</p>
-                                    <input type="file"  id="fileInput"
+                                    <p class="input-title">Upload File (PDF/PNG) <span style="color: red;">*</span></p>
+                                    <input type="file" id="fileInput"
                                            class="input-file-image"
-                                           accept=".pdf"  name="fileUp" onchange="setfilename(this.value)"/>
-                                    <input type="text" name="wpName" id="wpName" class="sign__input">
+                                           accept=".pdf,.png,.jpg,.jpeg" name="fileUp" 
+                                           required onchange="setfilename(this.value)"/>
+                                    <input type="text" name="wpName" id="wpName" class="sign__input" 
+                                           readonly placeholder="Chưa chọn file...">
+                                    <small class="text-muted">Chấp nhận: PDF, PNG, JPG, JPEG (tối đa 50MB)</small>
                                 </div>
                                 
                                 <div class="input-group-add">
-                                    <p class="input-title">Trạng thái</p>
-                                    <div class="radio-group ">
-                                        <label class="container active-input" >
-                                            Miễn phí <input name="Status" value="@((int)ChapterEnum.Normal)" type="radio" checked>
+                                    <p class="input-title">Trạng thái <span style="color: red;">*</span></p>
+                                    <div class="radio-group">
+                                        <label class="container active-input">
+                                            Miễn phí 
+                                            <input name="Status" value="@((int)ChapterEnum.Normal)" 
+                                                   type="radio" checked required>
                                             <span class="checkmark"></span>
                                         </label>
                                         <label class="container active-input">
-                                            Trả phí <input name="Status" value="@((int)ChapterEnum.Vip)" type="radio">
+                                            Trả phí 
+                                            <input name="Status" value="@((int)ChapterEnum.Vip)" 
+                                                   type="radio" required>
                                             <span class="checkmark"></span>
                                         </label>
                                     </div>
@@ -81,25 +103,260 @@
 </div>
    <script>
      window.onload = async()=>{
-       if(document.getElementById("take_notice").innerHTML === "1"){
+       if(document.getElementById("take_notice")?.innerHTML === "1"){
           onNotice();
        }
+       
+       // Add form validation
+       setupFormValidation();
     }
+    
+    function setupFormValidation() {
+        const form = document.querySelector('.sign__form');
+        const fileInput = document.getElementById('fileInput');
+        const chapterInput = document.querySelector('input[name="ChapNumber"]');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Validate on form submit
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Validate chapter number
+            const chapterNumber = parseInt(chapterInput.value);
+            if (!chapterNumber || chapterNumber <= 0) {
+                errorMessage = 'Số chapter phải là số nguyên dương.';
+                isValid = false;
+            }
+            
+            // Validate file
+            if (!fileInput.files || fileInput.files.length === 0) {
+                errorMessage = 'Vui lòng chọn file để upload.';
+                isValid = false;
+            } else {
+                const file = fileInput.files[0];
+                const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
+                const fileExtension = file.name.toLowerCase();
+                const isValidExtension = allowedExtensions.some(ext => fileExtension.endsWith(ext));
+                
+                if (!isValidExtension) {
+                    errorMessage = 'Chỉ chấp nhận file PDF, PNG, JPG, JPEG.';
+                    isValid = false;
+                }
+                if (file.size > 50 * 1024 * 1024) {
+                    errorMessage = 'File không được vượt quá 50MB.';
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                showErrorMessage(errorMessage);
+                return false;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang xử lý...';
+        });
+        
+        // File input validation
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
+                const fileExtension = file.name.toLowerCase();
+                const isValidExtension = allowedExtensions.some(ext => fileExtension.endsWith(ext));
+                
+                if (!isValidExtension) {
+                    showErrorMessage('Chỉ chấp nhận file PDF, PNG, JPG, JPEG.');
+                    this.value = '';
+                    document.getElementById('wpName').value = '';
+                    return;
+                }
+                if (file.size > 50 * 1024 * 1024) {
+                    showErrorMessage('File không được vượt quá 50MB.');
+                    this.value = '';
+                    document.getElementById('wpName').value = '';
+                    return;
+                }
+                setfilename(this.value);
+            }
+        });
+        
+        // Chapter number validation
+        chapterInput.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (this.value && (!value || value <= 0)) {
+                showErrorMessage('Số chapter phải là số nguyên dương.');
+            }
+        });
+    }
+    
+    function showErrorMessage(message) {
+        // Remove existing error message
+        const existingError = document.querySelector('.client-error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Create new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger client-error-message';
+        errorDiv.style.cssText = 'color: #721c24; background-color: #f8d7da; border: 1px solid #f5c2c7; padding: 10px; margin-bottom: 15px; border-radius: 4px;';
+        errorDiv.textContent = message;
+        
+        // Insert before form
+        const form = document.querySelector('.sign__form');
+        form.parentNode.insertBefore(errorDiv, form);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    }
+    
     function onNotice(){
        document.getElementById("done_success").style.display="block";
        sleep(1000);
-       
     }
+    
     function sleep(ms){
-    return new Promise(resolve => setTimeout(()=>{
-        document.getElementById("done_success").style.display="none";
-    }, ms));
+        return new Promise(resolve => setTimeout(()=>{
+            document.getElementById("done_success").style.display="none";
+        }, ms));
     }
-     function setfilename(val)
-            {
-                filename = val.split('\\').pop().split('/').pop();
-                document.getElementById('wpName').value = filename;
-            }
+    
+    function setfilename(val) {
+        filename = val.split('\\').pop().split('/').pop();
+        document.getElementById('wpName').value = filename;
+    }
+    
+    // Chapter validation functionality
+    let chapterCheckTimeout;
+    
+    function checkChapterExists() {
+        const chapterInput = document.querySelector('input[name="ChapNumber"]');
+        const mangaId = document.querySelector('input[name="mangaId"]').value;
+        const chapterNumber = parseInt(chapterInput.value);
+        
+        // Clear existing validation messages
+        clearChapterValidation();
+        
+        if (!chapterNumber || chapterNumber <= 0) {
+            return;
+        }
+        
+        // Show loading indicator
+        showChapterValidationMessage('Kiểm tra số chapter...', 'loading');
+        
+        // Make API call to check chapter existence
+        fetch(`http://localhost:5098/Manga/CheckChapterExists?mangaId=${mangaId}&chapterNumber=${chapterNumber}`)
+            .then(response => response.json())
+            .then(data => {
+                clearChapterValidation();
+                
+                if (data.success) {
+                    if (data.exists) {
+                        showChapterValidationMessage(
+                            `❌ Chapter ${chapterNumber} đã tồn tại! Vui lòng chọn số khác.`, 
+                            'error'
+                        );
+                        // Disable submit button
+                        document.getElementById('submitBtn').disabled = true;
+                    } else {
+                        showChapterValidationMessage(
+                            `✅ Chapter ${chapterNumber} có thể sử dụng`, 
+                            'success'
+                        );
+                        // Enable submit button
+                        document.getElementById('submitBtn').disabled = false;
+                    }
+                } else {
+                    showChapterValidationMessage('⚠️ Không thể kiểm tra chapter. Vui lòng thử lại.', 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Chapter validation error:', error);
+                clearChapterValidation();
+                showChapterValidationMessage('⚠️ Lỗi kết nối. Không thể kiểm tra chapter.', 'warning');
+            });
+    }
+    
+    function showChapterValidationMessage(message, type) {
+        const chapterInput = document.querySelector('input[name="ChapNumber"]');
+        const inputGroup = chapterInput.closest('.input-group-add');
+        
+        // Create validation message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chapter-validation-message ${type}`;
+        messageDiv.style.cssText = getValidationMessageStyle(type);
+        messageDiv.textContent = message;
+        
+        inputGroup.appendChild(messageDiv);
+    }
+    
+    function clearChapterValidation() {
+        const existingMessages = document.querySelectorAll('.chapter-validation-message');
+        existingMessages.forEach(msg => msg.remove());
+    }
+    
+    function getValidationMessageStyle(type) {
+        const baseStyle = 'padding: 5px 10px; margin-top: 5px; border-radius: 3px; font-size: 12px; font-weight: 500;';
+        
+        switch (type) {
+            case 'error':
+                return baseStyle + 'color: #721c24; background-color: #f8d7da; border: 1px solid #f5c2c7;';
+            case 'success':
+                return baseStyle + 'color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc;';
+            case 'warning':
+                return baseStyle + 'color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5;';
+            case 'loading':
+                return baseStyle + 'color: #055160; background-color: #cff4fc; border: 1px solid #b6effb;';
+            default:
+                return baseStyle;
+        }
+    }
+    
+    // Add event listener when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const chapterInput = document.querySelector('input[name="ChapNumber"]');
+        
+        if (chapterInput) {
+            chapterInput.addEventListener('input', function() {
+                // Clear any existing timeout
+                if (chapterCheckTimeout) {
+                    clearTimeout(chapterCheckTimeout);
+                }
+                
+                // Set new timeout to check after user stops typing
+                chapterCheckTimeout = setTimeout(checkChapterExists, 800);
+            });
+            
+            chapterInput.addEventListener('blur', function() {
+                // Check immediately when input loses focus
+                if (chapterCheckTimeout) {
+                    clearTimeout(chapterCheckTimeout);
+                }
+                checkChapterExists();
+            });
+        }
+        
+        // Prevent form submission if chapter exists
+        const form = document.querySelector('.sign__form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn.disabled) {
+                    e.preventDefault();
+                    alert('Không thể thêm chapter vì số chapter đã tồn tại. Vui lòng chọn số khác.');
+                    return false;
+                }
+            });
+        }
+    });
 
    </script>
 
